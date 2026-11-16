@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>読む・歩く・学ぶ</title>
+<meta name="description" content="週に1冊の読書・30,000歩・3時間の勉強を記録する習慣トラッカー">
+<meta name="theme-color" content="#eef0f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11141b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="読む歩く学ぶ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Outfit:wght@400;500;600&display=swap">
+<style>
+/* Layout: a weekly notebook — three habit gauges on top, a logging desk, then the week grid and history. */
+:root {
+  --bg: #eef0f4;
+  --surface: #ffffff;
+  --surface-2: #f6f7fa;
+  --ink: #1b2030;
+  --muted: #5d6476;
+  --line: #dadee7;
+  --read: #3c4cc0;
+  --walk: #217f52;
+  --study: #b06a06;
+  --read-soft: #e6e8fa;
+  --walk-soft: #dff1e7;
+  --study-soft: #f8ecd7;
+  --ok: #217f52;
+  --warn: #a8600d;
+  --bad: #bf3434;
+  --focus: #3c4cc0;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", system-ui, sans-serif;
+  --font-num: "Outfit", "Zen Kaku Gothic New", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141b; --surface: #191d26; --surface-2: #1f2430; --ink: #e8eaf1; --muted: #9ba2b4; --line: #2c3240;
+    --read: #95a1ff; --walk: #5ecf92; --study: #f0b24c;
+    --read-soft: #252a4a; --walk-soft: #1b3428; --study-soft: #3a2c15;
+    --ok: #5ecf92; --warn: #f0b24c; --bad: #ff7d7d; --focus: #95a1ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141b; --surface: #191d26; --surface-2: #1f2430; --ink: #e8eaf1; --muted: #9ba2b4; --line: #2c3240;
+  --read: #95a1ff; --walk: #5ecf92; --study: #f0b24c;
+  --read-soft: #252a4a; --walk-soft: #1b3428; --study-soft: #3a2c15;
+  --ok: #5ecf92; --warn: #f0b24c; --bad: #ff7d7d; --focus: #95a1ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; }
+.brand h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: .02em; text-wrap: balance; }
+.brand h1 span:nth-child(1) { color: var(--read); }
+.brand h1 span:nth-child(2) { color: var(--walk); }
+.brand h1 span:nth-child(3) { color: var(--study); }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.weeknav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.weeknav .range { font-weight: 700; font-size: 15px; padding: 0 6px; }
+.iconbtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+.iconbtn:hover { background: var(--surface-2); }
+.chipbtn { height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13px; }
+.chipbtn:hover { background: var(--surface-2); }
+.chipbtn[disabled] { opacity: .45; cursor: default; }
+.notice { font-size: 13px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line); }
+.notice.err { color: var(--bad); border-color: var(--bad); }
+
+/* habit cards */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.habit-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.habit-name svg { width: 20px; height: 20px; }
+.c-read { color: var(--read); } .c-walk { color: var(--walk); } .c-study { color: var(--study); }
+.pill { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 99px; white-space: nowrap; border: 1px solid currentColor; }
+.pill.done { color: var(--ok); background: var(--walk-soft); border-color: transparent; }
+.pill.ahead { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.behind { color: var(--bad); }
+.pill.miss { color: var(--bad); }
+.pill.idle { color: var(--muted); }
+.card-body { display: flex; align-items: center; gap: 14px; }
+.ring { width: 84px; height: 84px; flex: none; }
+.ring .track { stroke: var(--line); }
+.ring circle { fill: none; stroke-width: 8; }
+.ring .bar { stroke: currentColor; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+@media (prefers-reduced-motion: reduce) { .ring .bar { transition: none; } }
+.ring text { fill: var(--ink); font-family: var(--font-num); font-size: 17px; font-weight: 600; }
+.big { font-size: 26px; font-weight: 600; line-height: 1.15; }
+.big small { font-size: 14px; color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+.sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.pace { font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+.pace b { font-family: var(--font-num); font-weight: 600; }
+
+.coach { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.coach .mark { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-weight: 700; color: var(--muted); }
+.coach p { margin: 0; }
+.coach .t { font-weight: 700; }
+.coach .d { color: var(--muted); font-size: 14px; }
+
+/* panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+.panel h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+.panel h2 .hint { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.tab { flex: 1 1 0; min-width: 84px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-weight: 700; font-size: 14px; display: flex; gap: 6px; align-items: center; justify-content: center; }
+.tab svg { width: 16px; height: 16px; }
+.tab[aria-selected="true"][data-tab="steps"] { background: var(--walk-soft); border-color: var(--walk); color: var(--walk); }
+.tab[aria-selected="true"][data-tab="study"] { background: var(--study-soft); border-color: var(--study); color: var(--study); }
+.tab[aria-selected="true"][data-tab="read"] { background: var(--read-soft); border-color: var(--read); color: var(--read); }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; min-width: 0; }
+.field label { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .03em; }
+.field input, .field select { height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); padding: 0 12px; width: 100%; }
+.field input:focus { border-color: var(--focus); }
+.primary { height: 42px; padding: 0 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; color: #fff; background: var(--ink); }
+.primary.walk { background: var(--walk); } .primary.study { background: var(--study); } .primary.read { background: var(--read); }
+:root[data-theme="dark"] .primary, :root[data-theme="dark"] .primary.walk, :root[data-theme="dark"] .primary.study, :root[data-theme="dark"] .primary.read { color: #11141b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .primary { color: #11141b; } }
+.primary[disabled] { opacity: .5; cursor: default; }
+.ghost { height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; cursor: pointer; font-weight: 500; }
+.ghost:hover { background: var(--surface-2); }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button { height: 32px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13px; font-family: var(--font-num); }
+.quick button:hover { border-color: var(--study); color: var(--study); }
+.helper { font-size: 12px; color: var(--muted); margin: 0; }
+.flash { font-size: 13px; color: var(--ok); min-height: 1.4em; margin: 0; }
+.divider { border: none; border-top: 1px dashed var(--line); margin: 4px 0; }
+
+.timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--study-soft); border-radius: 12px; padding: 12px 14px; }
+.timer .clock { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 600; color: var(--study); letter-spacing: .02em; }
+.timer .lbl { font-size: 12px; color: var(--muted); }
+
+.book { background: var(--read-soft); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.book .title { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
+.meter { height: 8px; background: var(--surface); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--read); border-radius: 99px; }
+.linkbtn { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; font-size: 13px; align-self: flex-start; }
+
+/* day grid */
+.tablewrap { overflow-x: auto; }
+table.days { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; min-width: 560px; }
+.days th { font-size: 12px; font-weight: 500; color: var(--muted); padding: 2px; text-align: center; }
+.days th.rowh { width: 56px; text-align: left; color: var(--ink); font-weight: 700; font-size: 13px; white-space: nowrap; padding-right: 6px; }
+.days th.today { color: var(--ink); }
+.days th.today span { background: var(--ink); color: var(--bg); border-radius: 99px; padding: 1px 8px; }
+.days td { background: var(--surface-2); border-radius: 8px; height: 54px; position: relative; overflow: hidden; vertical-align: bottom; padding: 0; }
+.days td .fill { position: absolute; left: 0; right: 0; bottom: 0; opacity: .22; }
+.days td .val { position: relative; display: block; text-align: center; font-family: var(--font-num); font-size: 13px; font-weight: 600; padding: 4px 2px; }
+.days td.zero .val { color: var(--muted); font-weight: 400; }
+.days tr.walk .fill { background: var(--walk); } .days tr.study .fill { background: var(--study); } .days tr.read .fill { background: var(--read); }
+.days td.hit { box-shadow: inset 0 0 0 1.5px currentColor; }
+.days tr.walk td.hit { color: var(--walk); } .days tr.study td.hit { color: var(--study); } .days tr.read td.hit { color: var(--read); }
+.legend { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+
+/* history */
+.hist { display: flex; flex-direction: column; gap: 6px; }
+.hrow { display: grid; grid-template-columns: 88px repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center; font-size: 13px; }
+.hrow.head { color: var(--muted); font-size: 12px; }
+.hrow .wk { color: var(--muted); font-family: var(--font-num); }
+.hrow.cur .wk { color: var(--ink); font-weight: 600; }
+.hcell { height: 26px; border-radius: 7px; background: var(--surface-2); position: relative; overflow: hidden; }
+.hcell i { position: absolute; inset: 0 auto 0 0; opacity: .35; }
+.hcell.got i { opacity: 1; }
+.hcell span { position: relative; font-size: 11px; font-family: var(--font-num); padding: 0 8px; line-height: 26px; color: var(--ink); }
+.hcell.got span { color: #fff; font-weight: 600; }
+:root[data-theme="dark"] .hcell.got span { color: #11141b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hcell.got span { color: #11141b; } }
+.hcell.r i { background: var(--read); } .hcell.w i { background: var(--walk); } .hcell.s i { background: var(--study); }
+.streaks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.streak { border-radius: 12px; padding: 10px; background: var(--surface-2); text-align: center; }
+.streak .n { font-family: var(--font-num); font-size: 24px; font-weight: 600; line-height: 1.1; }
+.streak .l { font-size: 12px; color: var(--muted); }
+
+/* entries */
+.entries { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.entries li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.entries li:last-child { border-bottom: none; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.badge.steps { background: var(--walk-soft); color: var(--walk); }
+.badge.study { background: var(--study-soft); color: var(--study); }
+.badge.read, .badge.finish { background: var(--read-soft); color: var(--read); }
+.entries .what { min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+.entries .what small { color: var(--muted); display: block; font-size: 12px; }
+.del { border: 1px solid transparent; background: none; color: var(--muted); cursor: pointer; border-radius: 8px; padding: 4px 8px; font-size: 12px; }
+.del:hover { border-color: var(--line); }
+.del.arm { color: var(--bad); border-color: var(--bad); }
+.empty { color: var(--muted); font-size: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
+
+details.goals summary { cursor: pointer; font-weight: 700; font-size: 15px; }
+details.goals .form { margin-top: 12px; }
+
+@media (max-width: 820px) {
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .brand h1 { font-size: 22px; }
+  .hrow { grid-template-columns: 70px repeat(3, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1><span>読む</span>・<span>歩く</span>・<span>学ぶ</span></h1>
+      <p>週に1冊・30,000歩・3時間を、続く習慣に。</p>
+    </div>
+    <nav class="weeknav" aria-label="週の切り替え">
+      <button class="iconbtn" id="prevWeek" aria-label="前の週"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="range" id="weekRange">—</span>
+      <button class="iconbtn" id="nextWeek" aria-label="次の週"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="chipbtn" id="thisWeek">今週</button>
+    </nav>
+  </header>
+
+  <div class="notice" id="storeNotice" hidden></div>
+
+  <section class="cards" id="cards" aria-label="今週の進み具合"></section>
+
+  <div class="coach" id="coach"></div>
+
+  <div class="split">
+    <section class="panel" aria-labelledby="logTitle">
+      <h2 id="logTitle">記録する</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="steps" id="tab-steps"></button>
+        <button class="tab" role="tab" data-tab="study" id="tab-study"></button>
+        <button class="tab" role="tab" data-tab="read" id="tab-read"></button>
+      </div>
+
+      <div id="pane-steps" class="form" role="tabpanel">
+        <div class="row">
+          <div class="field"><label for="stepsDate">日付</label><select id="stepsDate"></select></div>
+          <div class="field"><label for="stepsVal">その日の歩数（合計）</label><input id="stepsVal" type="number" inputmode="numeric" min="0" step="1" placeholder="例: 6500"></div>
+        </div>
+        <div class="row"><button class="primary walk" id="saveSteps">歩数を記録</button></div>
+        <p class="helper">スマホのヘルスケアアプリに出ている1日の合計を入れてください。同じ日に入れ直すと上書きされます。</p>
+        <p class="flash" id="flashSteps" aria-live="polite"></p>
+      </div>
+
+      <div id="pane-study" class="form" role="tabpanel" hidden>
+        <div class="timer">
+          <div>
+            <div class="lbl" id="timerLbl">勉強タイマー</div>
+            <div class="clock" id="timerClock">0:00:00</div>
+          </div>
+          <div class="row">
+            <button class="primary study" id="timerBtn">開始</button>
+            <button class="ghost" id="timerCancel" hidden>取り消す</button>
+          </div>
+        </div>
+        <div class="field"><label for="studySubject">内容（任意）</label><input id="studySubject" type="text" maxlength="60" placeholder="例: 英単語、簿記の問題集"></div>
+        <hr class="divider">
+        <div class="row">
+          <div class="field"><label for="studyDate">日付</label><select id="studyDate"></select></div>
+          <div class="field"><label for="studyMin">時間（分）</label><input id="studyMin" type="number" inputmode="numeric" min="1" step="1" placeholder="例: 30"></div>
+        </div>
+        <div class="quick" aria-label="分を足す">
+          <button data-add="15">+15分</button><button data-add="30">+30分</button><button data-add="60">+60分</button><button data-add="0">クリア</button>
+        </div>
+        <div class="row"><button class="primary study" id="saveStudy">勉強時間を記録</button></div>
+        <p class="flash" id="flashStudy" aria-live="polite"></p>
+      </div>
+
+      <div id="pane-read" class="form" role="tabpanel" hidden></div>
+    </section>
+
+    <section class="panel" aria-labelledby="histTitle">
+      <h2 id="histTitle">続いている週<span class="hint">目標を達成した週の連続数</span></h2>
+      <div class="streaks" id="streaks"></div>
+      <div class="hist" id="history"></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="daysTitle">
+    <h2 id="daysTitle">この週の毎日<span class="hint">枠線は1日の目安（目標÷7）を超えた日</span></h2>
+    <div class="tablewrap"><table class="days" id="days"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="entTitle">
+    <h2 id="entTitle">この週の記録</h2>
+    <ul class="entries" id="entries"></ul>
+  </section>
+
+  <section class="panel">
+    <details class="goals">
+      <summary>目標を変える</summary>
+      <div class="form">
+        <div class="row">
+          <div class="field"><label for="gBooks">読書（冊／週）</label><input id="gBooks" type="number" min="1" step="1"></div>
+          <div class="field"><label for="gSteps">歩数（歩／週）</label><input id="gSteps" type="number" min="1000" step="1000"></div>
+          <div class="field"><label for="gStudy">勉強（時間／週）</label><input id="gStudy" type="number" min="0.5" step="0.5"></div>
+        </div>
+        <div class="row"><button class="primary" id="saveGoals">目標を保存</button></div>
+        <p class="flash" id="flashGoals" aria-live="polite"></p>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" aria-labelledby="bkTitle">
+    <h2 id="bkTitle">バックアップ<span class="hint">記録はこの端末の中だけに保存されます</span></h2>
+    <div class="form">
+      <p class="helper">機種変更やブラウザのデータ削除に備えて、ときどきファイルに書き出しておくと安心です。別の端末で「読み込む」と記録を移せます。</p>
+      <div class="row">
+        <button class="primary" id="exportBtn">ファイルに書き出す</button>
+        <button class="ghost" id="importBtn">ファイルから読み込む</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+      <p class="flash" id="flashBackup" aria-live="polite"></p>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const ICON = {
+    read: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5.5h6a3 3 0 0 1 3 3V20a2.5 2.5 0 0 0-2.5-2.5H3z"/><path d="M21 5.5h-6a3 3 0 0 0-3 3V20a2.5 2.5 0 0 1 2.5-2.5H21z"/></svg>',
+    walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5c1.8 0 3 2 3 4.8 0 2.4-.8 4-1.4 5.2H5.2C4.6 12.3 4 10.6 4 8.5 4 5.6 5.3 3.5 7 3.5z"/><path d="M5.4 16.5h3.2v1.2a1.6 1.6 0 0 1-3.2 0z"/><path d="M17 7.5c1.7 0 3 2.1 3 5 0 2.1-.6 3.8-1.2 5h-3.4c-.6-1.2-1.4-2.8-1.4-5.2 0-2.8 1.2-4.8 3-4.8z"/><path d="M15.4 20.5h3.2"/></svg>',
+    study: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5z"/><path d="M13.5 7l3 3"/></svg>'
+  };
+  const DEFAULT_GOALS = { books: 1, steps: 30000, studyMin: 180 };
+  const LOCAL_KEY = 'yomu-aruku-manabu-v1';
+  const TIMER_KEY = 'yomu-aruku-manabu-timer';
+  const DOW = ['日','月','火','水','木','金','土'];
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const mondayOf = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const k = (x.getDay() + 6) % 7; return addDays(x, -k); };
+  const weekId = monday => 'w' + ymd(monday);
+  const md = d => (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  const mdw = d => md(d) + '（' + DOW[d.getDay()] + '）';
+  const today = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+
+  // ---------- formatting ----------
+  const fmt = n => Math.round(n).toLocaleString('ja-JP');
+  const hm = min => { min = Math.round(min); const h = Math.floor(min / 60), m = min % 60; return h ? (m ? h + '時間' + m + '分' : h + '時間') : m + '分'; };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  // ---------- state ----------
+  const state = {
+    mode: 'local',
+    readOnly: false,
+    weeks: {},
+    settings: { goals: { ...DEFAULT_GOALS }, currentBook: null },
+    view: mondayOf(new Date()),
+    tab: 'steps'
+  };
+  let db = null, base = null;
+  const pending = {};
+  const queues = {};
+
+  const goals = () => ({ ...DEFAULT_GOALS, ...(state.settings.goals || {}) });
+  const entriesOf = id => (state.weeks[id] && state.weeks[id].entries) || [];
+
+  function summarize(entries) {
+    const s = { steps: 0, studyMin: 0, pages: 0, books: 0, finished: [] };
+    for (const e of entries) {
+      if (e.kind === 'steps') s.steps += +e.value || 0;
+      else if (e.kind === 'study') s.studyMin += +e.value || 0;
+      else if (e.kind === 'read') s.pages += +e.value || 0;
+      else if (e.kind === 'finish') { s.books += 1; s.finished.push(e.note || ''); }
+    }
+    return s;
+  }
+
+  // ---------- storage ----------
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if (raw) { const o = JSON.parse(raw); state.weeks = o.weeks || {}; state.settings = { goals: { ...DEFAULT_GOALS }, currentBook: null, ...(o.settings || {}) }; }
+    } catch (e) { /* storage unavailable */ }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ weeks: state.weeks, settings: state.settings })); } catch (e) {
+      notice('このブラウザでは保存できませんでした。ページを閉じると記録が消えます。', true);
+    }
+  }
+  function enqueue(key, fn) {
+    pending[key] = (pending[key] || 0) + 1;
+    queues[key] = (queues[key] || Promise.resolve()).then(fn).catch(err => {
+      if (err && (err.code === 'invalid_argument' || err.code === 'not_granted')) {
+        state.readOnly = true;
+        notice('この画面では記録を保存できません（閲覧のみの権限です）。', true);
+      } else if (err && err.code === 'quota_exceeded') {
+        notice('保存容量の上限に達しました。古い記録を削除すると保存できます。', true);
+      } else {
+        notice('保存に失敗しました。通信状態を確認して、もう一度記録してください。', true);
+      }
+    }).finally(() => { pending[key]--; });
+    return queues[key];
+  }
+  function persistWeek(id) {
+    if (state.mode === 'db') {
+      enqueue(id, () => db.doc(base + '/' + id).set(JSON.parse(JSON.stringify({ entries: entriesOf(id), updatedAt: Date.now() }))));
+    } else saveLocal();
+  }
+  function persistSettings() {
+    if (state.mode === 'db') {
+      enqueue('settings', () => db.doc(base + '/settings').set(JSON.parse(JSON.stringify({ ...state.settings, updatedAt: Date.now() }))));
+    } else saveLocal();
+  }
+  function addEntry(dateStr, entry) {
+    const id = weekId(mondayOf(parse(dateStr)));
+    const w = state.weeks[id] || { entries: [] };
+    state.weeks[id] = { ...w, entries: [...(w.entries || []), { id: uid(), date: dateStr, at: Date.now(), ...entry }] };
+    persistWeek(id);
+  }
+
+  const $ = id => document.getElementById(id);
+  function notice(text, err) {
+    const n = $('storeNotice');
+    n.textContent = text; n.hidden = !text; n.classList.toggle('err', !!err);
+  }
+
+  // ---------- pace ----------
+  function weekKind() {
+    const cur = mondayOf(new Date()).getTime(), v = state.view.getTime();
+    return v === cur ? 'current' : v < cur ? 'past' : 'future';
+  }
+  function dayIndex() { return (today().getDay() + 6) % 7; }
+
+  function statusOf(value, goal, kind) {
+    if (value >= goal) return { cls: 'done', text: '達成' };
+    if (kind === 'past') return { cls: 'miss', text: '未達成' };
+    if (kind === 'future') return { cls: 'idle', text: 'これから' };
+    const exp = goal * (dayIndex() + 1) / 7;
+    if (value >= exp) return { cls: 'ahead', text: 'ペース通り' };
+    if (value >= exp * 0.6) return { cls: 'warn', text: '少し遅れ' };
+    return { cls: 'behind', text: '巻き返し' };
+  }
+
+  function ring(frac, label) {
+    const r = 34, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac));
+    return `<svg class="ring" viewBox="0 0 84 84" role="img" aria-label="達成率 ${Math.round(frac * 100)}%"><circle class="track" cx="42" cy="42" r="${r}"/><circle class="bar" cx="42" cy="42" r="${r}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${(c * (1 - f)).toFixed(2)}" transform="rotate(-90 42 42)"/><text x="42" y="48" text-anchor="middle">${label}</text></svg>`;
+  }
+
+  function bookFrac(s, g) {
+    const cb = state.settings.currentBook;
+    let partial = 0;
+    if (weekKind() === 'current' && s.books < g.books && cb && cb.total > 0) partial = Math.min(0.99, (cb.page || 0) / cb.total);
+    return s.books + partial;
+  }
+
+  // ---------- render ----------
+  function render() {
+    const g = goals();
+    const id = weekId(state.view);
+    const entries = entriesOf(id);
+    const s = summarize(entries);
+    const kind = weekKind();
+    const idx = dayIndex();
+    const daysLeft = 7 - idx;
+    const end = addDays(state.view, 6);
+    $('weekRange').textContent = mdw(state.view) + ' 〜 ' + mdw(end);
+    $('thisWeek').disabled = kind === 'current';
+
+    // cards
+    const cb = state.settings.currentBook;
+    const bf = bookFrac(s, g);
+    const cards = [];
+
+    // reading
+    {
+      const st = statusOf(bf, g.books, kind);
+      let pace;
+      if (kind === 'current' && s.books < g.books) {
+        if (cb && cb.total > 0) {
+          const left = Math.max(0, cb.total - (cb.page || 0));
+          pace = `『${esc(cb.title)}』残り <b>${fmt(left)}</b>ページ。1日 <b>${fmt(Math.ceil(left / daysLeft))}</b>ページで日曜までに読み切れます。`;
+        } else pace = '読む本を登録すると、1日に読むページ数を計算します。';
+      } else if (kind === 'current') pace = s.books > g.books ? `目標を超えて <b>${s.books}</b>冊。すばらしいペースです。` : '今週の1冊を読み終えました。来週の本を選んでおきましょう。';
+      else if (kind === 'past') pace = s.finished.length ? '読了: ' + s.finished.map(t => '『' + esc(t) + '』').join('、') : 'この週に読み終えた本はありません。';
+      else pace = `この週の目標は ${g.books}冊です。`;
+      cards.push(card('read', '読書', st, ring(bf / g.books, Math.round(Math.min(1, bf / g.books) * 100) + '%'),
+        `<div class="big num">${s.books}<small> / ${g.books}冊</small></div><div class="sub">読んだページ <span class="num">${fmt(s.pages)}</span></div>`, pace));
+    }
+    // walking
+    {
+      const st = statusOf(s.steps, g.steps, kind);
+      let pace;
+      if (kind === 'current' && s.steps < g.steps) {
+        const left = g.steps - s.steps;
+        pace = `残り <b>${fmt(left)}</b>歩。残り${daysLeft}日なので1日 <b>${fmt(Math.ceil(left / daysLeft))}</b>歩。`;
+      } else if (kind === 'current') pace = `目標クリア。超えた分 <b>+${fmt(s.steps - g.steps)}</b>歩。`;
+      else if (kind === 'past') pace = `1日平均 <b>${fmt(s.steps / 7)}</b>歩でした。`;
+      else pace = `1日 <b>${fmt(g.steps / 7)}</b>歩が目安です。`;
+      cards.push(card('walk', '歩数', st, ring(s.steps / g.steps, Math.round(Math.min(1, s.steps / g.steps) * 100) + '%'),
+        `<div class="big num">${fmt(s.steps)}<small> / ${fmt(g.steps)}歩</small></div><div class="sub">1日の目安 <span class="num">${fmt(g.steps / 7)}</span>歩</div>`, pace));
+    }
+    // study
+    {
+      const st = statusOf(s.studyMin, g.studyMin, kind);
+      let pace;
+      if (kind === 'current' && s.studyMin < g.studyMin) {
+        const left = g.studyMin - s.studyMin;
+        pace = `残り <b>${hm(left)}</b>。1日 <b>${Math.ceil(left / daysLeft)}</b>分ずつで届きます。`;
+      } else if (kind === 'current') pace = `目標クリア。合計 <b>${hm(s.studyMin)}</b> 勉強しました。`;
+      else if (kind === 'past') pace = `1日平均 <b>${Math.round(s.studyMin / 7)}</b>分でした。`;
+      else pace = `1日 <b>${Math.ceil(g.studyMin / 7)}</b>分が目安です。`;
+      cards.push(card('study', '勉強', st, ring(s.studyMin / g.studyMin, Math.round(Math.min(1, s.studyMin / g.studyMin) * 100) + '%'),
+        `<div class="big num">${hm(s.studyMin)}<small> / ${hm(g.studyMin)}</small></div><div class="sub">1日の目安 <span class="num">${Math.ceil(g.studyMin / 7)}</span>分</div>`, pace));
+    }
+    $('cards').innerHTML = cards.join('');
+
+    renderCoach(s, g, bf, kind);
+    renderTabs();
+    renderDateSelects();
+    renderReadPane();
+    renderDays(entries, g);
+    renderEntries(entries);
+    renderHistory(g);
+    renderGoalsForm(g);
+  }
+
+  function card(key, name, st, ringSvg, mainHtml, pace) {
+    return `<article class="card">
+      <div class="card-head"><span class="habit-name c-${key}">${ICON[key]}${name}</span><span class="pill ${st.cls}">${st.text}</span></div>
+      <div class="card-body c-${key}">${ringSvg}<div style="color:var(--ink);min-width:0">${mainHtml}</div></div>
+      <div class="pace">${pace}</div>
+    </article>`;
+  }
+
+  function renderCoach(s, g, bf, kind) {
+    const el = $('coach');
+    let t, d, mark = '週';
+    if (kind === 'past') {
+      const got = [bf >= g.books, s.steps >= g.steps, s.studyMin >= g.studyMin].filter(Boolean).length;
+      t = `この週は3つのうち${got}つを達成しました。`;
+      d = got === 3 ? '全部そろった週です。この感覚を次の週にも。' : '達成できなかった習慣は、来週の月曜に少し多めに取り組むと楽になります。';
+      mark = got + '/3';
+    } else if (kind === 'future') {
+      t = 'まだ始まっていない週です。';
+      d = '今週の記録は「今週」ボタンから。';
+    } else {
+      const idx = dayIndex();
+      const items = [
+        { name: '読書', ratio: bf / g.books, exp: g.books * (idx + 1) / 7, val: bf, done: bf >= g.books },
+        { name: '歩数', ratio: s.steps / g.steps, exp: g.steps * (idx + 1) / 7, val: s.steps, done: s.steps >= g.steps },
+        { name: '勉強', ratio: s.studyMin / g.studyMin, exp: g.studyMin * (idx + 1) / 7, val: s.studyMin, done: s.studyMin >= g.studyMin }
+      ];
+      const behind = items.filter(i => !i.done && i.val < i.exp).sort((a, b) => (a.val / a.exp) - (b.val / b.exp));
+      const doneN = items.filter(i => i.done).length;
+      mark = DOW[today().getDay()];
+      if (doneN === 3) { t = '3つとも今週の目標を達成しました。'; d = 'ここから先はおまけです。休むのも習慣のうち。'; }
+      else if (!behind.length) { t = '3つともペース通りです。'; d = `今日は${DOW[today().getDay()]}曜日。この調子で日曜まで続けましょう。`; }
+      else {
+        const b = behind[0];
+        t = `いちばん遅れているのは${b.name}です。`;
+        if (b.name === '歩数') d = `今日あと ${fmt(b.exp - b.val)}歩 歩けば、今日までの目安に追いつきます。15分の散歩でおよそ1,500〜2,000歩です。`;
+        else if (b.name === '勉強') d = `今日あと ${Math.ceil(b.exp - b.val)}分 勉強すれば、今日までの目安に追いつきます。まずタイマーで15分だけ始めてみましょう。`;
+        else {
+          const cb = state.settings.currentBook;
+          d = cb && cb.total ? `『${esc(cb.title)}』は今日までに ${fmt(Math.ceil(cb.total * (idx + 1) / 7))}ページ目あたりが目安です（いま${fmt(cb.page || 0)}ページ）。寝る前の20分を読書にあててみましょう。` : '読む本をまだ登録していません。「読書」タブから今週の1冊を登録しましょう。';
+        }
+        mark = '!';
+      }
+    }
+    el.innerHTML = `<div class="mark">${esc(mark)}</div><div><p class="t">${t}</p><p class="d">${d}</p></div>`;
+  }
+
+  function renderTabs() {
+    const labels = { steps: ICON.walk + '歩数', study: ICON.study + '勉強', read: ICON.read + '読書' };
+    for (const k of ['steps', 'study', 'read']) {
+      const b = $('tab-' + k);
+      b.innerHTML = labels[k];
+      b.setAttribute('aria-selected', String(state.tab === k));
+      $('pane-' + k).hidden = state.tab !== k;
+    }
+  }
+
+  function dateOptions(selected) {
+    const t = ymd(today());
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(state.view, i), v = ymd(d);
+      html += `<option value="${v}"${v === selected ? ' selected' : ''}>${mdw(d)}${v === t ? '・今日' : ''}</option>`;
+    }
+    return html;
+  }
+  function defaultDate() {
+    const t = ymd(today());
+    for (let i = 0; i < 7; i++) if (ymd(addDays(state.view, i)) === t) return t;
+    return ymd(weekKind() === 'past' ? addDays(state.view, 6) : state.view);
+  }
+  function renderDateSelects() {
+    for (const id of ['stepsDate', 'studyDate', 'readDate']) {
+      const el = $(id); if (!el) continue;
+      const keep = el.value && el.dataset.week === weekId(state.view) ? el.value : defaultDate();
+      el.innerHTML = dateOptions(keep);
+      el.dataset.week = weekId(state.view);
+    }
+  }
+
+  function renderReadPane() {
+    const pane = $('pane-read');
+    const cb = state.settings.currentBook;
+    const prevDate = $('readDate') && $('readDate').dataset.week === weekId(state.view) ? $('readDate').value : defaultDate();
+    if (cb) {
+      const pct = cb.total ? Math.min(100, (cb.page || 0) / cb.total * 100) : 0;
+      pane.innerHTML = `
+        <div class="book">
+          <div class="helper">いま読んでいる本</div>
+          <div class="title">『${esc(cb.title)}』</div>
+          <div class="meter" role="img" aria-label="${Math.round(pct)}%"><i style="width:${pct}%"></i></div>
+          <div class="helper num">${fmt(cb.page || 0)} / ${fmt(cb.total)} ページ（${Math.round(pct)}%）</div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="readDate">日付</label><select id="readDate"></select></div>
+          <div class="field"><label for="readPage">しおりの位置（何ページまで読んだ？）</label><input id="readPage" type="number" inputmode="numeric" min="${(cb.page || 0) + 1}" max="${cb.total}" placeholder="例: ${Math.min(cb.total, (cb.page || 0) + 40)}"></div>
+        </div>
+        <div class="row">
+          <button class="primary read" id="saveRead">読んだところを記録</button>
+          <button class="ghost" id="finishBook">読み終えた</button>
+        </div>
+        <p class="helper">最後のページまで入れると、自動で「読了」になります。</p>
+        <button class="linkbtn" id="dropBook">この本をやめて別の本にする</button>
+        <p class="flash" id="flashRead" aria-live="polite"></p>`;
+    } else {
+      pane.innerHTML = `
+        <p class="helper">今週読む本を登録すると、残りページから1日の目安を出します。</p>
+        <div class="row">
+          <div class="field" style="flex-basis:220px"><label for="bookTitle">書名</label><input id="bookTitle" type="text" maxlength="100" placeholder="例: 星の王子さま"></div>
+          <div class="field"><label for="bookTotal">ページ数</label><input id="bookTotal" type="number" inputmode="numeric" min="1" placeholder="例: 240"></div>
+        </div>
+        <div class="row"><button class="primary read" id="startBook">読み始める</button></div>
+        <hr class="divider">
+        <p class="helper">登録せずに読み終えた本は、ここから記録できます。</p>
+        <div class="row">
+          <div class="field"><label for="readDate">読み終えた日</label><select id="readDate"></select></div>
+          <div class="field" style="flex-basis:200px"><label for="doneTitle">書名</label><input id="doneTitle" type="text" maxlength="100"></div>
+        </div>
+        <div class="row"><button class="ghost" id="saveDone">読了を記録</button></div>
+        <p class="flash" id="flashRead" aria-live="polite"></p>`;
+    }
+    const sel = $('readDate');
+    sel.innerHTML = dateOptions(prevDate);
+    sel.dataset.week = weekId(state.view);
+  }
+
+  function renderDays(entries, g) {
+    const t = ymd(today());
+    const per = { steps: {}, study: {}, read: {}, finish: {} };
+    for (const e of entries) per[e.kind] && (per[e.kind][e.date] = (per[e.kind][e.date] || 0) + (e.kind === 'finish' ? 1 : (+e.value || 0)));
+    let head = '<tr><th class="rowh"></th>';
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(state.view, i), v = ymd(d); dates.push(v);
+      head += `<th class="${v === t ? 'today' : ''}"><span>${DOW[d.getDay()]}</span><br><span class="num" style="background:none;color:inherit;padding:0">${d.getDate()}</span></th>`;
+    }
+    head += '</tr>';
+    const row = (cls, label, map, daily, show, maxRef) => {
+      let h = `<tr class="${cls}"><th class="rowh" scope="row">${label}</th>`;
+      for (const v of dates) {
+        const val = map[v] || 0;
+        const hgt = Math.min(100, val / maxRef * 100);
+        const extra = cls === 'read' && per.finish[v] ? ' 読了' : '';
+        h += `<td class="${val ? '' : 'zero'}${val >= daily && val > 0 ? ' hit' : ''}"><div class="fill" style="height:${hgt}%"></div><span class="val">${val ? show(val) : '—'}${extra}</span></td>`;
+      }
+      return h + '</tr>';
+    };
+    const dSteps = g.steps / 7, dStudy = g.studyMin / 7;
+    const cb = state.settings.currentBook;
+    const dPages = cb && cb.total ? cb.total * g.books / 7 : 40;
+    $('days').innerHTML = '<thead>' + head + '</thead><tbody>' +
+      row('walk', '歩数', per.steps, dSteps, v => fmt(v), dSteps * 1.5) +
+      row('study', '勉強', per.study, dStudy, v => v + '分', dStudy * 1.5) +
+      row('read', '読書', per.read, dPages, v => v + 'p', dPages * 1.5) +
+      '</tbody>';
+  }
+
+  const armed = new Set();
+  function renderEntries(entries) {
+    const ul = $('entries');
+    if (!entries.length) {
+      ul.innerHTML = `<li style="display:block;border:none"><div class="empty">${weekKind() === 'future' ? 'この週はまだ始まっていません。' : 'この週の記録はまだありません。上の「記録する」から最初の1件を入れてみましょう。'}</div></li>`;
+      return;
+    }
+    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || (b.at || 0) - (a.at || 0));
+    ul.innerHTML = sorted.map(e => {
+      const d = parse(e.date);
+      let badge, what;
+      if (e.kind === 'steps') { badge = '<span class="badge steps">歩数</span>'; what = `<span class="num">${fmt(e.value)}</span>歩`; }
+      else if (e.kind === 'study') { badge = '<span class="badge study">勉強</span>'; what = hm(e.value) + (e.note ? '・' + esc(e.note) : ''); }
+      else if (e.kind === 'read') { badge = '<span class="badge read">読書</span>'; what = `<span class="num">${fmt(e.value)}</span>ページ` + (e.note ? '・『' + esc(e.note) + '』' : ''); }
+      else { badge = '<span class="badge finish">読了</span>'; what = '『' + esc(e.note || '（書名なし）') + '』を読み終えた'; }
+      const arm = armed.has(e.id);
+      return `<li>${badge}<div class="what">${what}<small>${mdw(d)}</small></div><button class="del${arm ? ' arm' : ''}" data-del="${esc(e.id)}" aria-label="この記録を削除">${arm ? '削除する' : '削除'}</button></li>`;
+    }).join('');
+  }
+
+  function renderHistory(g) {
+    const curMon = mondayOf(new Date());
+    const rows = [];
+    const results = [];
+    for (let i = 7; i >= 0; i--) {
+      const mon = addDays(curMon, -7 * i);
+      const s = summarize(entriesOf(weekId(mon)));
+      const bfv = i === 0 ? (() => { const cb = state.settings.currentBook; let p = 0; if (s.books < g.books && cb && cb.total > 0) p = Math.min(.99, (cb.page || 0) / cb.total); return s.books + p; })() : s.books;
+      const r = { mon, cur: i === 0, b: bfv / g.books, w: s.steps / g.steps, s: s.studyMin / g.studyMin, bl: s.books + '冊', wl: fmt(s.steps), sl: hm(s.studyMin) };
+      results.push(r);
+    }
+    const cell = (cls, frac, label) => `<div class="hcell ${cls}${frac >= 1 ? ' got' : ''}"><i style="width:${Math.min(100, frac * 100)}%"></i><span>${label}</span></div>`;
+    rows.push('<div class="hrow head"><span>週</span><span>読書</span><span>歩数</span><span>勉強</span></div>');
+    for (const r of [...results].reverse()) {
+      rows.push(`<div class="hrow${r.cur ? ' cur' : ''}"><span class="wk">${r.cur ? '今週' : (r.mon.getMonth() + 1) + '/' + r.mon.getDate() + '〜'}</span>${cell('r', r.b, r.bl)}${cell('w', r.w, r.wl)}${cell('s', r.s, r.sl)}</div>`);
+    }
+    $('history').innerHTML = rows.join('');
+
+    // streaks over all stored weeks
+    const streak = key => {
+      let n = 0, mon = curMon;
+      const frac = m => { const s = summarize(entriesOf(weekId(m))); return key === 'b' ? s.books / g.books : key === 'w' ? s.steps / g.steps : s.studyMin / g.studyMin; };
+      if (frac(mon) >= 1) n++;
+      mon = addDays(mon, -7);
+      for (let i = 0; i < 520 && frac(mon) >= 1; i++) { n++; mon = addDays(mon, -7); }
+      return n;
+    };
+    $('streaks').innerHTML = [['b', '読書', 'c-read'], ['w', '歩数', 'c-walk'], ['s', '勉強', 'c-study']]
+      .map(([k, l, c]) => `<div class="streak"><div class="n num ${c}">${streak(k)}</div><div class="l">${l}・連続週</div></div>`).join('');
+  }
+
+  function renderGoalsForm(g) {
+    if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.goals')) return;
+    $('gBooks').value = g.books; $('gSteps').value = g.steps; $('gStudy').value = +(g.studyMin / 60).toFixed(2);
+  }
+
+  function flash(id, text) {
+    const el = $(id); if (!el) return;
+    el.textContent = text;
+    clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ''; }, 3500);
+  }
+  function guard() {
+    if (state.readOnly) { notice('この画面では記録を保存できません（閲覧のみの権限です）。', true); return false; }
+    if (state.mode === 'loading') { notice('読み込みが終わるまで少し待ってから記録してください。'); return false; }
+    return true;
+  }
+
+  // ---------- actions ----------
+  $('prevWeek').onclick = () => { state.view = addDays(state.view, -7); armed.clear(); render(); };
+  $('nextWeek').onclick = () => { state.view = addDays(state.view, 7); armed.clear(); render(); };
+  $('thisWeek').onclick = () => { state.view = mondayOf(new Date()); armed.clear(); render(); };
+  document.querySelector('.tabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    state.tab = b.dataset.tab; renderTabs();
+    try { localStorage.setItem(LOCAL_KEY + '-tab', state.tab); } catch (_) {}
+  });
+
+  $('saveSteps').onclick = () => {
+    if (!guard()) return;
+    const v = Math.round(+$('stepsVal').value);
+    const date = $('stepsDate').value;
+    if (!(v >= 0) || $('stepsVal').value === '') { flash('flashSteps', '歩数を数字で入れてください。'); return; }
+    if (v > 150000) { flash('flashSteps', '1日の歩数としては多すぎるようです。数字を確かめてください。'); return; }
+    const id = weekId(mondayOf(parse(date)));
+    const w = state.weeks[id] || { entries: [] };
+    const others = (w.entries || []).filter(e => !(e.kind === 'steps' && e.date === date));
+    const replaced = others.length !== (w.entries || []).length;
+    state.weeks[id] = { ...w, entries: [...others, { id: uid(), kind: 'steps', date, value: v, at: Date.now() }] };
+    persistWeek(id);
+    $('stepsVal').value = '';
+    flash('flashSteps', `${mdw(parse(date))}の歩数を ${fmt(v)}歩 で${replaced ? '上書き' : '記録'}しました。`);
+    render();
+  };
+
+  document.querySelector('#pane-study .quick').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const add = +b.dataset.add;
+    $('studyMin').value = add ? (+$('studyMin').value || 0) + add : '';
+  });
+  $('saveStudy').onclick = () => {
+    if (!guard()) return;
+    const v = Math.round(+$('studyMin').value);
+    const date = $('studyDate').value;
+    if (!(v > 0)) { flash('flashStudy', '勉強した時間を分で入れてください。'); return; }
+    if (v > 24 * 60) { flash('flashStudy', '1回の記録は24時間までです。'); return; }
+    addEntry(date, { kind: 'study', value: v, note: $('studySubject').value.trim() });
+    $('studyMin').value = '';
+    flash('flashStudy', `${mdw(parse(date))}に ${hm(v)} を記録しました。`);
+    render();
+  };
+
+  // reading pane (re-rendered, so delegate)
+  $('pane-read').addEventListener('click', e => {
+    const t = e.target.closest('button'); if (!t) return;
+    const cb = state.settings.currentBook;
+    if (t.id === 'startBook') {
+      if (!guard()) return;
+      const title = $('bookTitle').value.trim(), total = Math.round(+$('bookTotal').value);
+      if (!title) { flash('flashRead', '書名を入れてください。'); return; }
+      if (!(total > 0)) { flash('flashRead', 'ページ数を入れてください。'); return; }
+      state.settings = { ...state.settings, currentBook: { title, total, page: 0, startedAt: ymd(today()) } };
+      persistSettings(); render();
+      flash('flashRead', `『${title}』を読み始めました。`);
+    } else if (t.id === 'saveRead' && cb) {
+      if (!guard()) return;
+      const p = Math.round(+$('readPage').value), date = $('readDate').value;
+      if (!(p > 0)) { flash('flashRead', '何ページまで読んだかを入れてください。'); return; }
+      const page = Math.min(p, cb.total);
+      const diff = page - (cb.page || 0);
+      if (diff <= 0) { flash('flashRead', `いまのしおりは${cb.page}ページです。それより後のページを入れてください。`); return; }
+      addEntry(date, { kind: 'read', value: diff, note: cb.title });
+      if (page >= cb.total) {
+        addEntry(date, { kind: 'finish', value: 1, note: cb.title });
+        state.settings = { ...state.settings, currentBook: null };
+        persistSettings(); render();
+        flash('flashRead', `『${cb.title}』を読み終えました。おつかれさまでした。`);
+      } else {
+        state.settings = { ...state.settings, currentBook: { ...cb, page } };
+        persistSettings(); render();
+        flash('flashRead', `${diff}ページ読みました。残り${cb.total - page}ページです。`);
+      }
+    } else if (t.id === 'finishBook' && cb) {
+      if (!guard()) return;
+      const date = $('readDate').value;
+      const left = cb.total - (cb.page || 0);
+      if (left > 0) addEntry(date, { kind: 'read', value: left, note: cb.title });
+      addEntry(date, { kind: 'finish', value: 1, note: cb.title });
+      state.settings = { ...state.settings, currentBook: null };
+      persistSettings(); render();
+      flash('flashRead', `『${cb.title}』を読み終えました。次の本を登録しましょう。`);
+    } else if (t.id === 'dropBook' && cb) {
+      if (!guard()) return;
+      if (t.dataset.arm !== '1') { t.dataset.arm = '1'; t.textContent = 'もう一度押すと、この本の登録を外します（記録は残ります）'; return; }
+      state.settings = { ...state.settings, currentBook: null };
+      persistSettings(); render();
+    } else if (t.id === 'saveDone') {
+      if (!guard()) return;
+      const title = $('doneTitle').value.trim();
+      if (!title) { flash('flashRead', '書名を入れてください。'); return; }
+      const date = $('readDate').value;
+      addEntry(date, { kind: 'finish', value: 1, note: title });
+      render();
+      flash('flashRead', `『${title}』の読了を記録しました。`);
+    }
+  });
+
+  $('entries').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    if (!guard()) return;
+    const eid = b.dataset.del;
+    if (!armed.has(eid)) { armed.add(eid); renderEntries(entriesOf(weekId(state.view))); setTimeout(() => { if (armed.delete(eid)) renderEntries(entriesOf(weekId(state.view))); }, 4000); return; }
+    armed.delete(eid);
+    const id = weekId(state.view);
+    const w = state.weeks[id]; if (!w) return;
+    state.weeks[id] = { ...w, entries: w.entries.filter(x => x.id !== eid) };
+    persistWeek(id); render();
+  });
+
+  $('saveGoals').onclick = () => {
+    if (!guard()) return;
+    const books = Math.max(1, Math.round(+$('gBooks').value || 1));
+    const steps = Math.max(1000, Math.round(+$('gSteps').value || 30000));
+    const studyMin = Math.max(30, Math.round((+$('gStudy').value || 3) * 60));
+    state.settings = { ...state.settings, goals: { books, steps, studyMin } };
+    persistSettings(); document.activeElement && document.activeElement.blur && document.activeElement.blur(); render();
+    flash('flashGoals', `目標を ${books}冊・${fmt(steps)}歩・${hm(studyMin)} にしました。`);
+  };
+
+  // ---------- study timer (kept in this browser) ----------
+  let timer = null, tick = null;
+  try { timer = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (_) {}
+  function clockText(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); }
+  function renderTimer() {
+    const running = !!(timer && timer.start);
+    $('timerBtn').textContent = running ? '止めて記録' : '開始';
+    $('timerCancel').hidden = !running;
+    $('timerLbl').textContent = running ? '勉強中…（ページを閉じても計測は続きます）' : '勉強タイマー';
+    $('timerClock').textContent = clockText(running ? Date.now() - timer.start : 0);
+    clearInterval(tick);
+    if (running) tick = setInterval(() => { $('timerClock').textContent = clockText(Date.now() - timer.start); }, 1000);
+  }
+  function saveTimer() { try { timer ? localStorage.setItem(TIMER_KEY, JSON.stringify(timer)) : localStorage.removeItem(TIMER_KEY); } catch (_) {} }
+  $('timerBtn').onclick = () => {
+    if (timer && timer.start) {
+      if (!guard()) return;
+      const min = Math.max(1, Math.round((Date.now() - timer.start) / 60000));
+      const date = ymd(new Date(timer.start));
+      addEntry(date, { kind: 'study', value: min, note: $('studySubject').value.trim() });
+      timer = null; saveTimer(); renderTimer();
+      state.view = mondayOf(parse(date));
+      render();
+      flash('flashStudy', `${hm(min)} の勉強を記録しました。おつかれさまでした。`);
+    } else {
+      timer = { start: Date.now() }; saveTimer(); renderTimer();
+    }
+  };
+  $('timerCancel').onclick = () => { timer = null; saveTimer(); renderTimer(); flash('flashStudy', 'タイマーを取り消しました（記録はしていません）。'); };
+
+  // ---------- boot ----------
+  try { const t = localStorage.getItem(LOCAL_KEY + '-tab'); if (t === 'steps' || t === 'study' || t === 'read') state.tab = t; } catch (_) {}
+  if (timer && timer.start) state.tab = 'study';
+  render();
+  renderTimer();
+
+  loadLocal();
+  render();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (_) {}
+  try { localStorage.setItem(LOCAL_KEY + '-probe', '1'); localStorage.removeItem(LOCAL_KEY + '-probe'); }
+  catch (_) { notice('このブラウザでは記録を保存できません（プライベートモードなど）。通常のモードで開いてください。', true); }
+
+  // ---------- backup ----------
+  $('exportBtn').onclick = () => {
+    const data = JSON.stringify({ app: 'yomu-aruku-manabu', version: 1, exportedAt: new Date().toISOString(), weeks: state.weeks, settings: state.settings }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'habits-backup-' + ymd(today()) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    flash('flashBackup', 'バックアップを書き出しました。');
+  };
+  let pendingImport = null;
+  $('importBtn').onclick = () => {
+    if (pendingImport) {
+      state.weeks = pendingImport.weeks || {};
+      state.settings = { goals: { ...DEFAULT_GOALS }, currentBook: null, ...(pendingImport.settings || {}) };
+      pendingImport = null; $('importBtn').textContent = 'ファイルから読み込む';
+      saveLocal(); render();
+      flash('flashBackup', 'バックアップから記録を読み込みました。');
+      return;
+    }
+    $('importFile').click();
+  };
+  $('importFile').onchange = async e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const o = JSON.parse(await f.text());
+      if (!o || o.app !== 'yomu-aruku-manabu' || typeof o.weeks !== 'object') throw new Error('format');
+      pendingImport = o;
+      const n = Object.values(o.weeks).reduce((a, w) => a + ((w && w.entries) || []).length, 0);
+      $('importBtn').textContent = '上書きして読み込む';
+      flash('flashBackup', `${n}件の記録が入ったファイルです。いまの記録はすべて置き換わります。よければ「上書きして読み込む」を押してください。`);
+    } catch (_) {
+      flash('flashBackup', 'このファイルは読み込めません。「ファイルに書き出す」で作ったファイルを選んでください。');
+    }
+  };
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+})();
+</script>
+
+</body>
+</html>
