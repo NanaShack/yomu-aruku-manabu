@@ -1,11 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#1b2030"/>
-  <g fill="none" stroke-width="34" stroke-linecap="round" transform="rotate(-90 256 256)">
-    <circle cx="256" cy="256" r="170" stroke="#2c3348"/>
-    <circle cx="256" cy="256" r="170" stroke="#95a1ff" stroke-dasharray="801 1068"/>
-    <circle cx="256" cy="256" r="118" stroke="#2c3348"/>
-    <circle cx="256" cy="256" r="118" stroke="#5ecf92" stroke-dasharray="556 741"/>
-    <circle cx="256" cy="256" r="66" stroke="#2c3348"/>
-    <circle cx="256" cy="256" r="66" stroke="#f0b24c" stroke-dasharray="311 415"/>
-  </g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f7ee"/>
+      <stop offset="1" stop-color="#e2eedb"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- soil -->
+  <path d="M120 392c36-26 88-38 136-38s100 12 136 38" fill="none" stroke="#8a6a4a" stroke-width="22" stroke-linecap="round"/>
+  <!-- stem -->
+  <path d="M256 384V250" fill="none" stroke="#2f8a4f" stroke-width="22" stroke-linecap="round"/>
+  <!-- left leaf -->
+  <path d="M252 262c-10-62-58-104-128-106-4 70 44 116 128 106z" fill="#4fb36a"/>
+  <path d="M244 254c-26-30-58-50-96-60" fill="none" stroke="#2f8a4f" stroke-width="8" stroke-linecap="round"/>
+  <!-- right leaf -->
+  <path d="M260 236c6-74 62-124 144-126 4 82-52 136-144 126z" fill="#6cc985"/>
+  <path d="M268 228c28-38 66-62 112-74" fill="none" stroke="#2f8a4f" stroke-width="8" stroke-linecap="round"/>
 </svg>
