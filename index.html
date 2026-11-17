@@ -384,7 +384,7 @@ details.goals .form { margin-top: 12px; }
   </div>
 
   <section class="panel" aria-labelledby="daysTitle">
-    <h2 id="daysTitle">この週の毎日<span class="hint">枠線は1日の目安（目標÷7）を超えた日</span></h2>
+    <h2 id="daysTitle">この週の毎日<span class="hint">枠線は1日の目安を超えた日（読書は週単位なので枠線なし）</span></h2>
     <div class="tablewrap"><table class="days" id="days"></table></div>
   </section>
 
@@ -550,6 +550,18 @@ details.goals .form { margin-top: 12px; }
   }
   function dayIndex() { return (today().getDay() + 6) % 7; }
 
+  function readDeadline() {
+    const sun = addDays(mondayOf(new Date()), 6);
+    const left = 7 - dayIndex();
+    return { sun, left, text: left === 1 ? `今日 ${mdw(sun)} が締め切り` : `締め切り ${mdw(sun)}・あと${left}日` };
+  }
+  function readStatus(done, kind) {
+    if (done) return { cls: 'done', text: '達成' };
+    if (kind === 'past') return { cls: 'miss', text: '未達成' };
+    if (kind === 'future') return { cls: 'idle', text: 'これから' };
+    const left = 7 - dayIndex();
+    return { cls: 'idle', text: left === 1 ? '今日まで' : `あと${left}日` };
+  }
   function statusOf(value, goal, kind) {
     if (value >= goal) return { cls: 'done', text: '達成' };
     if (kind === 'past') return { cls: 'miss', text: '未達成' };
@@ -592,18 +604,19 @@ details.goals .form { margin-top: 12px; }
 
     // reading
     {
-      const st = statusOf(bf, g.books, kind);
+      const st = readStatus(s.books >= g.books, kind);
+      const dl = readDeadline();
       let pace;
       if (kind === 'current' && s.books < g.books) {
         if (cb && cb.total > 0) {
           const left = Math.max(0, cb.total - (cb.page || 0));
-          pace = `『${esc(cb.title)}』残り <b>${fmt(left)}</b>ページ。1日 <b>${fmt(Math.ceil(left / daysLeft))}</b>ページで日曜までに読み切れます。`;
-        } else pace = '読む本を登録すると、1日に読むページ数を計算します。';
+          pace = `<b>${dl.text}</b>。『${esc(cb.title)}』は残り${fmt(left)}ページ。読む日は自由です。`;
+        } else pace = `<b>${dl.text}</b>。読む本を登録しておくと、残りページがわかります。`;
       } else if (kind === 'current') pace = s.books > g.books ? `目標を超えて <b>${s.books}</b>冊。すばらしいペースです。` : '今週の1冊を読み終えました。来週の本を選んでおきましょう。';
       else if (kind === 'past') pace = s.finished.length ? '読了: ' + s.finished.map(t => '『' + esc(t) + '』').join('、') : 'この週に読み終えた本はありません。';
       else pace = `この週の目標は ${g.books}冊です。`;
       cards.push(card('read', '読書', st, ring(bf / g.books, Math.round(Math.min(1, bf / g.books) * 100) + '%'),
-        `<div class="big num">${s.books}<small> / ${g.books}冊</small></div><div class="sub">読んだページ <span class="num">${fmt(s.pages)}</span></div>`, pace));
+        `<div class="big num">${s.books}<small> / ${g.books}冊</small></div><div class="sub">${kind === 'current' && s.books < g.books ? '締め切り ' + mdw(readDeadline().sun) : '読んだページ <span class="num">' + fmt(s.pages) + '</span>'}</div>`, pace));
     }
     // walking
     {
@@ -691,23 +704,22 @@ details.goals .form { margin-top: 12px; }
         { name: '勉強', ratio: s.studyMin / g.studyMin, exp: g.studyMin * (idx + 1) / 7, val: s.studyMin, done: s.studyMin >= g.studyMin },
         { name: 'Duolingo', ratio: s.duoDays / g.duoDays, exp: g.duoDays * (idx + 1) / 7, val: s.duoDays, done: s.duoDays >= g.duoDays }
       ];
-      const behind = items.filter(i => !i.done && i.val < i.exp).sort((a, b) => (a.val / a.exp) - (b.val / b.exp));
+      const behind = items.filter(i => !i.done && i.val < i.exp && i.name !== '読書').sort((a, b) => (a.val / a.exp) - (b.val / b.exp));
       const doneN = items.filter(i => i.done).length;
       mark = DOW[today().getDay()];
+      const rd = readDeadline();
+      const readNote = !items[0].done && rd.left <= 2 ? `<br>読書は${rd.left === 1 ? '今日が締め切り' : '締め切りまであと2日'}です。` : '';
       if (doneN === items.length) { t = '4つとも今週の目標を達成しました。'; d = 'ここから先はおまけです。休むのも習慣のうち。'; }
-      else if (!behind.length) { t = '4つともペース通りです。'; d = `今日は${DOW[today().getDay()]}曜日。この調子で日曜まで続けましょう。`; }
+      else if (!behind.length) { t = '順調です。'; d = `今日は${DOW[today().getDay()]}曜日。この調子で日曜まで続けましょう。`; }
       else {
         const b = behind[0];
         t = `いちばん遅れているのは${b.name}です。`;
         if (b.name === '歩数') d = `今日あと ${fmt(b.exp - b.val)}歩 歩けば、今日までの目安に追いつきます。15分の散歩でおよそ1,500〜2,000歩です。`;
         else if (b.name === '勉強') d = `今日あと ${Math.ceil(b.exp - b.val)}分 勉強すれば、今日までの目安に追いつきます。まずタイマーで15分だけ始めてみましょう。`;
-        else if (b.name === 'Duolingo') d = 'Duolingoは1レッスン5分ほど。今日やれば目安に近づきます。電車やトイレの時間にどうぞ。';
-        else {
-          const cb = state.settings.currentBook;
-          d = cb && cb.total ? `『${esc(cb.title)}』は今日までに ${fmt(Math.ceil(cb.total * (idx + 1) / 7))}ページ目あたりが目安です（いま${fmt(cb.page || 0)}ページ）。寝る前の20分を読書にあててみましょう。` : '読む本をまだ登録していません。「読書」タブから今週の1冊を登録しましょう。';
-        }
+        else d = 'Duolingoは1レッスン5分ほど。今日やれば目安に近づきます。電車やトイレの時間にどうぞ。';
         mark = '!';
       }
+      d += readNote;
     }
     el.innerHTML = `<div class="mark">${esc(mark)}</div><div><p class="t">${t}</p><p class="d">${d}</p></div>`;
   }
@@ -755,6 +767,7 @@ details.goals .form { margin-top: 12px; }
         <div class="book">
           <div class="helper">いま読んでいる本</div>
           <div class="title">『${esc(cb.title)}』</div>
+          <div class="helper"><b>${readDeadline().text}</b></div>
           <div class="meter" role="img" aria-label="${Math.round(pct)}%"><i style="width:${pct}%"></i></div>
           <div class="helper num">${fmt(cb.page || 0)} / ${fmt(cb.total)} ページ（${Math.round(pct)}%）</div>
         </div>
@@ -771,7 +784,7 @@ details.goals .form { margin-top: 12px; }
         <p class="flash" id="flashRead" aria-live="polite"></p>`;
     } else {
       pane.innerHTML = `
-        <p class="helper">今週読む本を登録すると、残りページから1日の目安を出します。</p>
+        <p class="helper">今週読む本を登録しましょう。締め切りは日曜です。いつ読むかは自由です。</p>
         <div class="row">
           <div class="field" style="flex-basis:220px"><label for="bookTitle">書名</label><input id="bookTitle" type="text" maxlength="100" placeholder="例: 星の王子さま"></div>
           <div class="field"><label for="bookTotal">ページ数</label><input id="bookTotal" type="number" inputmode="numeric" min="1" placeholder="例: 240"></div>
@@ -818,7 +831,7 @@ details.goals .form { margin-top: 12px; }
     $('days').innerHTML = '<thead>' + head + '</thead><tbody>' +
       row('walk', '歩数', per.steps, dSteps, v => fmt(v), dSteps * 1.5) +
       row('study', '勉強', per.study, dStudy, v => v + '分', dStudy * 1.5) +
-      row('read', '読書', per.read, dPages, v => v + 'p', dPages * 1.5) +
+      row('read', '読書', per.read, Infinity, v => v + 'p', dPages * 1.5) +
       row('duo', 'Duolingo', Object.fromEntries(Object.keys(per.duo).map(k => [k, 1])), 1, () => 'やった', 1) +
       '</tbody>';
   }
@@ -954,6 +967,11 @@ details.goals .form { margin-top: 12px; }
       if (now !== null) {
         cls = 'ok';
         desc = `今日は <b>${show(now)}</b>。できました。`;
+      } else if (key === 'read') {
+        const dl = readDeadline();
+        const doneWeek = summarize(entriesOf(weekId(mondayOf(t)))).books >= g.books;
+        const plan = p.when || p.min ? `${p.when ? '<b>' + esc(p.when) + '</b>' : ''}${p.when && p.min ? ' → ' : ''}${p.min ? '<b>' + esc(p.min) + '</b>' : ''}<br>` : '';
+        desc = doneWeek ? '今週の1冊は読み終えています。' : `${plan}${dl.text}。読む日は自由です。`;
       } else if (used && yest === null) {
         cls = 'alert';
         desc = `昨日はお休みでした。2日続けて休まなければ習慣は切れません。今日は<b>${esc(p.min || '最低ラインだけ')}</b>で十分です。`;
@@ -962,7 +980,7 @@ details.goals .form { margin-top: 12px; }
           ? `${p.when ? '<b>' + esc(p.when) + '</b>' : ''}${p.when && p.min ? ' → ' : ''}${p.min ? 'まず<b>' + esc(p.min) + '</b>' : ''}`
           : (key === 'duo' ? '1レッスンだけでも1日に数えます。' : key === 'walk' ? `今日の目安は ${fmt(g.steps / 7)}歩。` : key === 'study' ? `今日の目安は ${Math.ceil(g.studyMin / 7)}分。` : '少しでも読めたら記録しましょう。');
       }
-      const sl = streak ? `<span class="num">${streak}日連続</span>` : '';
+      const sl = streak && key !== 'read' ? `<span class="num">${streak}日連続</span>` : '';
       return `<div class="trow ${key} ${cls}"><div class="chk c-${key}">${now !== null ? CHECK : ''}</div><div style="min-width:0"><div class="tt">${name}${sl}</div><div class="td">${desc}</div></div>${key === 'duo' ? (now !== null ? '' : '<button class="go" data-duo-today="1">やった</button>') : `<button class="go" data-go="${tabKey}">${now !== null ? '追加' : '記録'}</button>`}</div>`;
     });
     const lastMon = addDays(mondayOf(t), -7);
