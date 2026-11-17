@@ -207,6 +207,29 @@ table.days { width: 100%; table-layout: fixed; border-collapse: separate; border
 .del.arm { color: var(--bad); border-color: var(--bad); }
 .empty { color: var(--muted); font-size: 14px; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
 
+.today { display: flex; flex-direction: column; gap: 10px; }
+.trow { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.trow .chk { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 2px dashed var(--line); }
+.trow .chk svg { width: 20px; height: 20px; }
+.trow.ok .chk { border: none; color: #fff; }
+.trow.ok.read .chk { background: var(--read); } .trow.ok.walk .chk { background: var(--walk); } .trow.ok.study .chk { background: var(--study); }
+:root[data-theme="dark"] .trow.ok .chk { color: #11141b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .trow.ok .chk { color: #11141b; } }
+.trow.alert { box-shadow: inset 3px 0 0 var(--warn); }
+.trow .tt { font-weight: 700; font-size: 14px; }
+.trow .tt .num { font-weight: 600; color: var(--muted); font-size: 12px; margin-left: 6px; }
+.trow .td { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.trow .td b { color: var(--ink); font-weight: 500; }
+.trow .go { height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.trow .go:hover { border-color: var(--ink); }
+.lastnote { font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px dashed var(--line); }
+.lastnote b { font-weight: 700; }
+.rules { display: flex; flex-direction: column; gap: 14px; }
+.rule { display: flex; flex-direction: column; gap: 8px; }
+.rule .habit-name svg { width: 18px; height: 18px; }
+textarea { font: inherit; color: inherit; width: 100%; min-height: 64px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px 12px; resize: vertical; }
+.tips { margin: 0; padding-left: 1.2em; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.tips b { color: var(--ink); font-weight: 500; }
 details.goals summary { cursor: pointer; font-weight: 700; font-size: 15px; }
 details.goals .form { margin-top: 12px; }
 
@@ -238,9 +261,45 @@ details.goals .form { margin-top: 12px; }
 
   <div class="notice" id="storeNotice" hidden></div>
 
+  <section class="panel" aria-labelledby="todayTitle">
+    <h2 id="todayTitle">今日の一歩<span class="hint" id="todayDate"></span></h2>
+    <div class="today" id="today"></div>
+  </section>
+
   <section class="cards" id="cards" aria-label="今週の進み具合"></section>
 
   <div class="coach" id="coach"></div>
+
+  <section class="panel">
+    <details class="goals" id="rulesBox">
+      <summary>わたしのルール（いつやるか・最低ライン）</summary>
+      <div class="form">
+        <ul class="tips">
+          <li><b>きっかけ</b>は「毎日かならずやっていること」のあとに決めると忘れにくくなります。例: 歯みがきのあと、駅に着いたら。</li>
+          <li><b>最低ライン</b>は、疲れた日でもできるくらい小さくします。やる気がない日はこれだけで「できた」に数えてください。</li>
+        </ul>
+        <div class="rules">
+          <div class="rule"><span class="habit-name c-read" data-icon="read">読書</span>
+            <div class="row">
+              <div class="field"><label for="planReadWhen">きっかけ（いつ・どこで）</label><input id="planReadWhen" type="text" maxlength="60" placeholder="例: 夜、布団に入ったら"></div>
+              <div class="field"><label for="planReadMin">最低ライン</label><input id="planReadMin" type="text" maxlength="60" placeholder="例: 1ページだけ読む"></div>
+            </div></div>
+          <div class="rule"><span class="habit-name c-walk" data-icon="walk">歩数</span>
+            <div class="row">
+              <div class="field"><label for="planWalkWhen">きっかけ（いつ・どこで）</label><input id="planWalkWhen" type="text" maxlength="60" placeholder="例: 昼ごはんを食べたら"></div>
+              <div class="field"><label for="planWalkMin">最低ライン</label><input id="planWalkMin" type="text" maxlength="60" placeholder="例: 外に出て5分歩く"></div>
+            </div></div>
+          <div class="rule"><span class="habit-name c-study" data-icon="study">勉強</span>
+            <div class="row">
+              <div class="field"><label for="planStudyWhen">きっかけ（いつ・どこで）</label><input id="planStudyWhen" type="text" maxlength="60" placeholder="例: 朝、コーヒーを入れたら"></div>
+              <div class="field"><label for="planStudyMin">最低ライン</label><input id="planStudyMin" type="text" maxlength="60" placeholder="例: テキストを開いて5分"></div>
+            </div></div>
+        </div>
+        <div class="row"><button class="primary" id="saveRules">ルールを保存</button></div>
+        <p class="flash" id="flashRules" aria-live="polite"></p>
+      </div>
+    </details>
+  </section>
 
   <div class="split">
     <section class="panel" aria-labelledby="logTitle">
@@ -298,6 +357,17 @@ details.goals .form { margin-top: 12px; }
   <section class="panel" aria-labelledby="daysTitle">
     <h2 id="daysTitle">この週の毎日<span class="hint">枠線は1日の目安（目標÷7）を超えた日</span></h2>
     <div class="tablewrap"><table class="days" id="days"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="revTitle">
+    <h2 id="revTitle">週のふりかえり<span class="hint">週末に1分だけ</span></h2>
+    <div class="form">
+      <div class="field"><label for="revGood">うまくいったこと</label><textarea id="revGood" maxlength="300" placeholder="例: 通勤の電車で読むと続いた"></textarea></div>
+      <div class="field"><label for="revNext">次の週にひとつだけ変えること</label><textarea id="revNext" maxlength="300" placeholder="例: 勉強は夜ではなく朝にする"></textarea></div>
+      <div class="row"><button class="primary" id="saveReview">ふりかえりを保存</button></div>
+      <p class="helper">「次の週に変えること」は、翌週の「今日の一歩」の上に表示されます。</p>
+      <p class="flash" id="flashReview" aria-live="polite"></p>
+    </div>
   </section>
 
   <section class="panel" aria-labelledby="entTitle">
@@ -453,7 +523,7 @@ details.goals .form { margin-top: 12px; }
     const exp = goal * (dayIndex() + 1) / 7;
     if (value >= exp) return { cls: 'ahead', text: 'ペース通り' };
     if (value >= exp * 0.6) return { cls: 'warn', text: '少し遅れ' };
-    return { cls: 'behind', text: '巻き返し' };
+    return { cls: 'behind', text: '遅れ気味' };
   }
 
   function ring(frac, label) {
@@ -537,6 +607,9 @@ details.goals .form { margin-top: 12px; }
     renderEntries(entries);
     renderHistory(g);
     renderGoalsForm(g);
+    renderToday();
+    renderRules();
+    renderReview();
   }
 
   function card(key, name, st, ringSvg, mainHtml, pace) {
@@ -750,6 +823,108 @@ details.goals .form { margin-top: 12px; }
     if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.goals')) return;
     $('gBooks').value = g.books; $('gSteps').value = g.steps; $('gStudy').value = +(g.studyMin / 60).toFixed(2);
   }
+
+  // ---------- habit support ----------
+  const KINDS = { read: ['read', 'finish'], walk: ['steps'], study: ['study'] };
+  function amountOn(dateStr, key) {
+    const list = entriesOf(weekId(mondayOf(parse(dateStr))));
+    let v = 0, any = false;
+    for (const e of list) if (e.date === dateStr && KINDS[key].includes(e.kind)) { any = true; v += e.kind === 'finish' ? 0 : (+e.value || 0); }
+    return any ? v : null;
+  }
+  function dayStreak(key) {
+    let d = today();
+    if (amountOn(ymd(d), key) === null) d = addDays(d, -1);
+    let n = 0;
+    while (n < 3650 && amountOn(ymd(d), key) !== null) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  function hasAnyBefore(dateStr) {
+    for (const w of Object.values(state.weeks)) for (const e of (w.entries || [])) if (e.date < dateStr) return true;
+    return false;
+  }
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function renderToday() {
+    const t = today(), ts = ymd(t), ys = ymd(addDays(t, -1));
+    $('todayDate').textContent = mdw(t);
+    const plans = state.settings.plans || {};
+    const g = goals();
+    const used = hasAnyBefore(ts);
+    const rows = [
+      ['read', '読書', v => v ? v + 'ページ' : '読了'],
+      ['walk', '歩数', v => fmt(v) + '歩'],
+      ['study', '勉強', v => hm(v)]
+    ].map(([key, name, show]) => {
+      const p = plans[key] || {};
+      const now = amountOn(ts, key), yest = amountOn(ys, key);
+      const streak = dayStreak(key);
+      const tabKey = key === 'walk' ? 'steps' : key;
+      let cls = '', desc;
+      if (now !== null) {
+        cls = 'ok';
+        desc = `今日は <b>${show(now)}</b>。できました。`;
+      } else if (used && yest === null) {
+        cls = 'alert';
+        desc = `昨日はお休みでした。2日続けて休まなければ習慣は切れません。今日は<b>${esc(p.min || '最低ラインだけ')}</b>で十分です。`;
+      } else {
+        desc = p.when || p.min
+          ? `${p.when ? '<b>' + esc(p.when) + '</b>' : ''}${p.when && p.min ? ' → ' : ''}${p.min ? 'まず<b>' + esc(p.min) + '</b>' : ''}`
+          : (key === 'walk' ? `今日の目安は ${fmt(g.steps / 7)}歩。` : key === 'study' ? `今日の目安は ${Math.ceil(g.studyMin / 7)}分。` : '少しでも読めたら記録しましょう。');
+      }
+      const sl = streak ? `<span class="num">${streak}日連続</span>` : '';
+      return `<div class="trow ${key} ${cls}"><div class="chk c-${key}">${now !== null ? CHECK : ''}</div><div style="min-width:0"><div class="tt">${name}${sl}</div><div class="td">${desc}</div></div><button class="go" data-go="${tabKey}">${now !== null ? '追加' : '記録'}</button></div>`;
+    });
+    const lastMon = addDays(mondayOf(t), -7);
+    const lw = state.weeks[weekId(lastMon)];
+    const note = lw && lw.review && lw.review.next ? `<div class="lastnote">先週決めたこと: <b>${esc(lw.review.next)}</b></div>` : '';
+    const doneN = rows.filter(r => r.includes(' ok"')).length;
+    $('today').innerHTML = note + rows.join('') + (doneN === 3 ? '<p class="helper">今日は3つともできました。このまま休んで大丈夫です。</p>' : '');
+  }
+  $('today').addEventListener('click', e => {
+    const b = e.target.closest('[data-go]'); if (!b) return;
+    state.view = mondayOf(new Date());
+    state.tab = b.dataset.go; render();
+    document.getElementById('logTitle').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  const PLAN_IDS = { read: ['planReadWhen', 'planReadMin'], walk: ['planWalkWhen', 'planWalkMin'], study: ['planStudyWhen', 'planStudyMin'] };
+  let rulesSig = null, iconsDone = false;
+  function renderRules() {
+    if (!iconsDone) { iconsDone = true; document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = ICON[el.dataset.icon] + el.textContent; }); }
+    const plans = state.settings.plans || {};
+    const sig = JSON.stringify(plans);
+    if (sig === rulesSig || $('rulesBox').contains(document.activeElement)) return;
+    rulesSig = sig;
+    for (const k in PLAN_IDS) { $(PLAN_IDS[k][0]).value = (plans[k] || {}).when || ''; $(PLAN_IDS[k][1]).value = (plans[k] || {}).min || ''; }
+    const empty = !Object.values(plans).some(p => p && (p.when || p.min));
+    $('rulesBox').open = empty;
+  }
+  $('saveRules').onclick = () => {
+    if (!guard()) return;
+    const plans = {};
+    for (const k in PLAN_IDS) plans[k] = { when: $(PLAN_IDS[k][0]).value.trim(), min: $(PLAN_IDS[k][1]).value.trim() };
+    state.settings = { ...state.settings, plans };
+    persistSettings(); render();
+    flash('flashRules', 'ルールを保存しました。「今日の一歩」に表示されます。');
+  };
+
+  let reviewWeek = null;
+  function renderReview() {
+    const id = weekId(state.view);
+    const r = (state.weeks[id] && state.weeks[id].review) || {};
+    const sig = id + JSON.stringify(r);
+    if (reviewWeek === sig || (reviewWeek && reviewWeek.startsWith(id) && /^rev/.test((document.activeElement || {}).id || ''))) return;
+    reviewWeek = sig;
+    $('revGood').value = r.good || ''; $('revNext').value = r.next || '';
+  }
+  $('saveReview').onclick = () => {
+    if (!guard()) return;
+    const id = weekId(state.view);
+    const w = state.weeks[id] || { entries: [] };
+    state.weeks[id] = { ...w, entries: w.entries || [], review: { good: $('revGood').value.trim(), next: $('revNext').value.trim() } };
+    persistWeek(id); render();
+    flash('flashReview', 'ふりかえりを保存しました。');
+  };
 
   function flash(id, text) {
     const el = $(id); if (!el) return;
