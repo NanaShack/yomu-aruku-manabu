@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>読む・歩く・学ぶ</title>
-<meta name="description" content="週に1冊の読書・30,000歩・3時間の勉強を記録する習慣トラッカー">
+<meta name="description" content="週に1冊の読書・30,000歩・週3日の勉強・毎日のDuolingoを記録する習慣トラッカー">
 <meta name="theme-color" content="#eef0f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#11141b" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -150,9 +150,6 @@ button, input, select { font: inherit; color: inherit; }
 .flash { font-size: 13px; color: var(--ok); min-height: 1.4em; margin: 0; }
 .divider { border: none; border-top: 1px dashed var(--line); margin: 4px 0; }
 
-.timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--study-soft); border-radius: 12px; padding: 12px 14px; }
-.timer .clock { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 600; color: var(--study); letter-spacing: .02em; }
-.timer .lbl { font-size: 12px; color: var(--muted); }
 
 .book { background: var(--read-soft); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .book .title { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
@@ -245,7 +242,9 @@ textarea { font: inherit; color: inherit; width: 100%; min-height: 64px; border-
 .dday[disabled] { opacity: .4; cursor: default; }
 :root[data-theme="dark"] .dday.on, :root[data-theme="dark"] .dday.on .num { color: #11141b; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dday.on, :root:not([data-theme="light"]) .dday.on .num { color: #11141b; } }
-#duoToday { height: 52px; font-size: 16px; }
+#duoToday, .bigtoggle { height: 52px; font-size: 16px; }
+.dday.on.study { background: var(--study); }
+.dday.study.today { box-shadow: inset 0 0 0 2px var(--study); }
 details.goals summary { cursor: pointer; font-weight: 700; font-size: 15px; }
 details.goals .form { margin-top: 12px; }
 
@@ -265,7 +264,7 @@ details.goals .form { margin-top: 12px; }
   <header class="top">
     <div class="brand">
       <h1><span>読む</span>・<span>歩く</span>・<span>学ぶ</span></h1>
-      <p>週に1冊・30,000歩・3時間・毎日のDuolingoを、続く習慣に。</p>
+      <p>週に1冊・30,000歩・週3日の勉強・毎日のDuolingoを、続く習慣に。</p>
     </div>
     <nav class="weeknav" aria-label="週の切り替え">
       <button class="iconbtn" id="prevWeek" aria-label="前の週"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -308,7 +307,7 @@ details.goals .form { margin-top: 12px; }
           <div class="rule"><span class="habit-name c-study" data-icon="study">勉強</span>
             <div class="row">
               <div class="field"><label for="planStudyWhen">きっかけ（いつ・どこで）</label><input id="planStudyWhen" type="text" maxlength="60" placeholder="例: 朝、コーヒーを入れたら"></div>
-              <div class="field"><label for="planStudyMin">最低ライン</label><input id="planStudyMin" type="text" maxlength="60" placeholder="例: テキストを開いて5分"></div>
+              <div class="field"><label for="planStudyMin">最低ライン</label><input id="planStudyMin" type="text" maxlength="60" placeholder="例: テキストを開いて1問だけ"></div>
             </div></div>
           <div class="rule"><span class="habit-name c-duo" data-icon="duo">Duolingo</span>
             <div class="row">
@@ -343,26 +342,10 @@ details.goals .form { margin-top: 12px; }
       </div>
 
       <div id="pane-study" class="form" role="tabpanel" hidden>
-        <div class="timer">
-          <div>
-            <div class="lbl" id="timerLbl">勉強タイマー</div>
-            <div class="clock" id="timerClock">0:00:00</div>
-          </div>
-          <div class="row">
-            <button class="primary study" id="timerBtn">開始</button>
-            <button class="ghost" id="timerCancel" hidden>取り消す</button>
-          </div>
-        </div>
-        <div class="field"><label for="studySubject">内容（任意）</label><input id="studySubject" type="text" maxlength="60" placeholder="例: 英単語、簿記の問題集"></div>
-        <hr class="divider">
-        <div class="row">
-          <div class="field"><label for="studyDate">日付</label><select id="studyDate"></select></div>
-          <div class="field"><label for="studyMin">時間（分）</label><input id="studyMin" type="number" inputmode="numeric" min="1" step="1" placeholder="例: 30"></div>
-        </div>
-        <div class="quick" aria-label="分を足す">
-          <button data-add="15">+15分</button><button data-add="30">+30分</button><button data-add="60">+60分</button><button data-add="0">クリア</button>
-        </div>
-        <div class="row"><button class="primary study" id="saveStudy">勉強時間を記録</button></div>
+        <div class="row"><div class="field"><label for="studySubject">内容（任意）</label><input id="studySubject" type="text" maxlength="60" placeholder="例: 英単語、簿記の問題集"></div></div>
+        <button class="primary study bigtoggle" id="studyToday">今日の勉強、やった！</button>
+        <p class="helper">この週の日をタップすると「やった／やっていない」を切り替えられます。少しでもやれば1日です。</p>
+        <div class="duodays" id="studyDays"></div>
         <p class="flash" id="flashStudy" aria-live="polite"></p>
       </div>
 
@@ -411,7 +394,7 @@ details.goals .form { margin-top: 12px; }
         <div class="row">
           <div class="field"><label for="gBooks">読書（冊／週）</label><input id="gBooks" type="number" min="1" step="1"></div>
           <div class="field"><label for="gSteps">歩数（歩／週）</label><input id="gSteps" type="number" min="1000" step="1000"></div>
-          <div class="field"><label for="gStudy">勉強（時間／週）</label><input id="gStudy" type="number" min="0.5" step="0.5"></div>
+          <div class="field"><label for="gStudy">勉強（日／週）</label><input id="gStudy" type="number" min="1" max="7" step="1"></div>
           <div class="field"><label for="gDuo">Duolingo（日／週）</label><input id="gDuo" type="number" min="1" max="7" step="1"></div>
         </div>
         <div class="row"><button class="primary" id="saveGoals">目標を保存</button></div>
@@ -442,9 +425,8 @@ details.goals .form { margin-top: 12px; }
     study: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5z"/><path d="M13.5 7l3 3"/></svg>'
   };
   ICON.duo = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10.5h-9l-4.5 3.5v-3.5H4z"/><path d="M8.5 9.2h7M8.5 12h4"/></svg>';
-  const DEFAULT_GOALS = { books: 1, steps: 30000, studyMin: 180, duoDays: 7 };
+  const DEFAULT_GOALS = { books: 1, steps: 30000, studyDays: 3, duoDays: 7 };
   const LOCAL_KEY = 'yomu-aruku-manabu-v1';
-  const TIMER_KEY = 'yomu-aruku-manabu-timer';
   const DOW = ['日','月','火','水','木','金','土'];
 
   // ---------- dates ----------
@@ -477,20 +459,21 @@ details.goals .form { margin-top: 12px; }
   const pending = {};
   const queues = {};
 
-  const goals = () => ({ ...DEFAULT_GOALS, ...(state.settings.goals || {}) });
+  const goals = () => { const g = { ...DEFAULT_GOALS, ...(state.settings.goals || {}) }; delete g.studyMin; return g; };
   const entriesOf = id => (state.weeks[id] && state.weeks[id].entries) || [];
 
   function summarize(entries) {
-    const s = { steps: 0, studyMin: 0, pages: 0, books: 0, finished: [], duoDays: 0 };
-    const duo = new Set();
+    const s = { steps: 0, studyDays: 0, pages: 0, books: 0, finished: [], duoDays: 0 };
+    const duo = new Set(), study = new Set();
     for (const e of entries) {
       if (e.kind === 'steps') s.steps += +e.value || 0;
-      else if (e.kind === 'study') s.studyMin += +e.value || 0;
+      else if (e.kind === 'study') study.add(e.date);
       else if (e.kind === 'read') s.pages += +e.value || 0;
       else if (e.kind === 'duo') duo.add(e.date);
       else if (e.kind === 'finish') { s.books += 1; s.finished.push(e.note || ''); }
     }
     s.duoDays = duo.size;
+    s.studyDays = study.size;
     return s;
   }
 
@@ -633,16 +616,20 @@ details.goals .form { margin-top: 12px; }
     }
     // study
     {
-      const st = statusOf(s.studyMin, g.studyMin, kind);
+      const st = statusOf(s.studyDays, g.studyDays, kind);
+      const todayDone = kind === 'current' && entries.some(e => e.kind === 'study' && e.date === ymd(today()));
       let pace;
-      if (kind === 'current' && s.studyMin < g.studyMin) {
-        const left = g.studyMin - s.studyMin;
-        pace = `残り <b>${hm(left)}</b>。1日 <b>${Math.ceil(left / daysLeft)}</b>分ずつで届きます。`;
-      } else if (kind === 'current') pace = `目標クリア。合計 <b>${hm(s.studyMin)}</b> 勉強しました。`;
-      else if (kind === 'past') pace = `1日平均 <b>${Math.round(s.studyMin / 7)}</b>分でした。`;
-      else pace = `1日 <b>${Math.ceil(g.studyMin / 7)}</b>分が目安です。`;
-      cards.push(card('study', '勉強', st, ring(s.studyMin / g.studyMin, Math.round(Math.min(1, s.studyMin / g.studyMin) * 100) + '%'),
-        `<div class="big num">${hm(s.studyMin)}<small> / ${hm(g.studyMin)}</small></div><div class="sub">1日の目安 <span class="num">${Math.ceil(g.studyMin / 7)}</span>分</div>`, pace));
+      if (kind === 'current' && s.studyDays < g.studyDays) {
+        const left = g.studyDays - s.studyDays;
+        const room = daysLeft - (todayDone ? 1 : 0);
+        pace = left > room
+          ? `今週は最大 <b>${s.studyDays + room}</b>日まで。できる日を1日ずつ重ねましょう。`
+          : `あと <b>${left}</b>日（今週は残り${daysLeft}日）。${todayDone ? '今日の分はできています。' : '少しでもやれば1日です。'}`;
+      } else if (kind === 'current') pace = `今週の目標クリア。<b>${s.studyDays}</b>日勉強しました。`;
+      else if (kind === 'past') pace = `この週は <b>${s.studyDays}</b>日勉強しました。`;
+      else pace = `週${g.studyDays}日が目標です。`;
+      cards.push(card('study', '勉強', st, ring(s.studyDays / g.studyDays, Math.round(Math.min(1, s.studyDays / g.studyDays) * 100) + '%'),
+        `<div class="big num">${s.studyDays}<small> / ${g.studyDays}日</small></div><div class="sub">${todayDone ? '今日はやりました' : '週' + g.studyDays + '日やればOK'}</div>`, pace));
     }
     // duolingo
     {
@@ -689,7 +676,7 @@ details.goals .form { margin-top: 12px; }
     const el = $('coach');
     let t, d, mark = '週';
     if (kind === 'past') {
-      const got = [bf >= g.books, s.steps >= g.steps, s.studyMin >= g.studyMin, s.duoDays >= g.duoDays].filter(Boolean).length;
+      const got = [bf >= g.books, s.steps >= g.steps, s.studyDays >= g.studyDays, s.duoDays >= g.duoDays].filter(Boolean).length;
       t = `この週は4つのうち${got}つを達成しました。`;
       d = got === 4 ? '全部そろった週です。この感覚を次の週にも。' : '達成できなかった習慣は、来週の月曜に少し多めに取り組むと楽になります。';
       mark = got + '/4';
@@ -701,7 +688,7 @@ details.goals .form { margin-top: 12px; }
       const items = [
         { name: '読書', ratio: bf / g.books, exp: g.books * (idx + 1) / 7, val: bf, done: bf >= g.books },
         { name: '歩数', ratio: s.steps / g.steps, exp: g.steps * (idx + 1) / 7, val: s.steps, done: s.steps >= g.steps },
-        { name: '勉強', ratio: s.studyMin / g.studyMin, exp: g.studyMin * (idx + 1) / 7, val: s.studyMin, done: s.studyMin >= g.studyMin },
+        { name: '勉強', ratio: s.studyDays / g.studyDays, exp: g.studyDays * (idx + 1) / 7, val: s.studyDays, done: s.studyDays >= g.studyDays },
         { name: 'Duolingo', ratio: s.duoDays / g.duoDays, exp: g.duoDays * (idx + 1) / 7, val: s.duoDays, done: s.duoDays >= g.duoDays }
       ];
       const behind = items.filter(i => !i.done && i.val < i.exp && i.name !== '読書').sort((a, b) => (a.val / a.exp) - (b.val / b.exp));
@@ -715,7 +702,7 @@ details.goals .form { margin-top: 12px; }
         const b = behind[0];
         t = `いちばん遅れているのは${b.name}です。`;
         if (b.name === '歩数') d = `今日あと ${fmt(b.exp - b.val)}歩 歩けば、今日までの目安に追いつきます。15分の散歩でおよそ1,500〜2,000歩です。`;
-        else if (b.name === '勉強') d = `今日あと ${Math.ceil(b.exp - b.val)}分 勉強すれば、今日までの目安に追いつきます。まずタイマーで15分だけ始めてみましょう。`;
+        else if (b.name === '勉強') d = `勉強は週${g.studyDays}日が目標。今日少しでもやれば1日に数えます。テキストを開いて1問だけでも大丈夫です。`;
         else d = 'Duolingoは1レッスン5分ほど。今日やれば目安に近づきます。電車やトイレの時間にどうぞ。';
         mark = '!';
       }
@@ -825,12 +812,12 @@ details.goals .form { margin-top: 12px; }
       }
       return h + '</tr>';
     };
-    const dSteps = g.steps / 7, dStudy = g.studyMin / 7;
+    const dSteps = g.steps / 7;
     const cb = state.settings.currentBook;
     const dPages = cb && cb.total ? cb.total * g.books / 7 : 40;
     $('days').innerHTML = '<thead>' + head + '</thead><tbody>' +
       row('walk', '歩数', per.steps, dSteps, v => fmt(v), dSteps * 1.5) +
-      row('study', '勉強', per.study, dStudy, v => v + '分', dStudy * 1.5) +
+      row('study', '勉強', Object.fromEntries(Object.keys(per.study).map(k => [k, 1])), 1, () => 'やった', 1) +
       row('read', '読書', per.read, Infinity, v => v + 'p', dPages * 1.5) +
       row('duo', 'Duolingo', Object.fromEntries(Object.keys(per.duo).map(k => [k, 1])), 1, () => 'やった', 1) +
       '</tbody>';
@@ -848,7 +835,7 @@ details.goals .form { margin-top: 12px; }
       const d = parse(e.date);
       let badge, what;
       if (e.kind === 'steps') { badge = '<span class="badge steps">歩数</span>'; what = `<span class="num">${fmt(e.value)}</span>歩`; }
-      else if (e.kind === 'study') { badge = '<span class="badge study">勉強</span>'; what = hm(e.value) + (e.note ? '・' + esc(e.note) : ''); }
+      else if (e.kind === 'study') { badge = '<span class="badge study">勉強</span>'; what = 'やった' + (e.value > 1 ? `（${hm(e.value)}）` : '') + (e.note ? '・' + esc(e.note) : ''); }
       else if (e.kind === 'read') { badge = '<span class="badge read">読書</span>'; what = `<span class="num">${fmt(e.value)}</span>ページ` + (e.note ? '・『' + esc(e.note) + '』' : ''); }
       else if (e.kind === 'duo') { badge = '<span class="badge duo">Duolingo</span>'; what = 'レッスンをやった'; }
       else { badge = '<span class="badge finish">読了</span>'; what = '『' + esc(e.note || '（書名なし）') + '』を読み終えた'; }
@@ -865,7 +852,7 @@ details.goals .form { margin-top: 12px; }
       const mon = addDays(curMon, -7 * i);
       const s = summarize(entriesOf(weekId(mon)));
       const bfv = i === 0 ? (() => { const cb = state.settings.currentBook; let p = 0; if (s.books < g.books && cb && cb.total > 0) p = Math.min(.99, (cb.page || 0) / cb.total); return s.books + p; })() : s.books;
-      const r = { mon, cur: i === 0, b: bfv / g.books, w: s.steps / g.steps, s: s.studyMin / g.studyMin, bl: s.books + '冊', wl: fmt(s.steps), sl: hm(s.studyMin), d: s.duoDays / g.duoDays, dl: s.duoDays + '日' };
+      const r = { mon, cur: i === 0, b: bfv / g.books, w: s.steps / g.steps, s: s.studyDays / g.studyDays, bl: s.books + '冊', wl: fmt(s.steps), sl: s.studyDays + '日', d: s.duoDays / g.duoDays, dl: s.duoDays + '日' };
       results.push(r);
     }
     const cell = (cls, frac, label) => `<div class="hcell ${cls}${frac >= 1 ? ' got' : ''}"><i style="width:${Math.min(100, frac * 100)}%"></i><span>${label}</span></div>`;
@@ -878,7 +865,7 @@ details.goals .form { margin-top: 12px; }
     // streaks over all stored weeks
     const streak = key => {
       let n = 0, mon = curMon;
-      const frac = m => { const s = summarize(entriesOf(weekId(m))); return key === 'b' ? s.books / g.books : key === 'w' ? s.steps / g.steps : key === 's' ? s.studyMin / g.studyMin : s.duoDays / g.duoDays; };
+      const frac = m => { const s = summarize(entriesOf(weekId(m))); return key === 'b' ? s.books / g.books : key === 'w' ? s.steps / g.steps : key === 's' ? s.studyDays / g.studyDays : s.duoDays / g.duoDays; };
       if (frac(mon) >= 1) n++;
       mon = addDays(mon, -7);
       for (let i = 0; i < 520 && frac(mon) >= 1; i++) { n++; mon = addDays(mon, -7); }
@@ -890,42 +877,52 @@ details.goals .form { margin-top: 12px; }
 
   function renderGoalsForm(g) {
     if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.goals')) return;
-    $('gBooks').value = g.books; $('gSteps').value = g.steps; $('gStudy').value = +(g.studyMin / 60).toFixed(2); $('gDuo').value = g.duoDays;
+    $('gBooks').value = g.books; $('gSteps').value = g.steps; $('gStudy').value = g.studyDays; $('gDuo').value = g.duoDays;
   }
 
   // ---------- duolingo ----------
-  function toggleDuo(dateStr) {
+  function toggleDay(kind, dateStr) {
     if (!guard()) return null;
     const id = weekId(mondayOf(parse(dateStr)));
     const w = state.weeks[id] || { entries: [] };
     const list = w.entries || [];
-    const has = list.some(e => e.kind === 'duo' && e.date === dateStr);
-    state.weeks[id] = { ...w, entries: has ? list.filter(e => !(e.kind === 'duo' && e.date === dateStr)) : [...list, { id: uid(), kind: 'duo', date: dateStr, value: 1, at: Date.now() }] };
+    const has = list.some(e => e.kind === kind && e.date === dateStr);
+    const note = kind === 'study' ? $('studySubject').value.trim() : '';
+    state.weeks[id] = { ...w, entries: has ? list.filter(e => !(e.kind === kind && e.date === dateStr)) : [...list, { id: uid(), kind, date: dateStr, value: 1, note, at: Date.now() }] };
+    if (!has && kind === 'study') $('studySubject').value = '';
     persistWeek(id); render();
     return !has;
   }
-  function renderDuoPane(entries) {
+  function renderDayPane(kind, entries, gridId, btnId, label) {
     const ts = ymd(today());
-    const on = new Set(entries.filter(e => e.kind === 'duo').map(e => e.date));
+    const on = new Set(entries.filter(e => e.kind === kind).map(e => e.date));
     let html = '';
     for (let i = 0; i < 7; i++) {
       const d = addDays(state.view, i), v = ymd(d);
-      html += `<button class="dday${on.has(v) ? ' on' : ''}${v === ts ? ' today' : ''}" data-day="${v}" aria-pressed="${on.has(v)}"${v > ts ? ' disabled' : ''} aria-label="${mdw(d)}"><span>${DOW[d.getDay()]}</span><span class="num">${d.getDate()}</span></button>`;
+      html += `<button class="dday ${kind}${on.has(v) ? ' on' : ''}${v === ts ? ' today' : ''}" data-day="${v}" aria-pressed="${on.has(v)}"${v > ts ? ' disabled' : ''} aria-label="${mdw(d)}"><span>${DOW[d.getDay()]}</span><span class="num">${d.getDate()}</span></button>`;
     }
-    $('duoDays').innerHTML = html;
-    const doneToday = amountOn(ts, 'duo') !== null;
-    $('duoToday').disabled = doneToday;
-    $('duoToday').textContent = doneToday ? '今日のDuolingoはやりました ✓' : '今日のDuolingo、やった！';
+    $(gridId).innerHTML = html;
+    const doneToday = amountOn(ts, kind === 'duo' ? 'duo' : 'study') !== null;
+    $(btnId).disabled = doneToday;
+    $(btnId).textContent = doneToday ? `今日の${label}はやりました ✓` : `今日の${label}、やった！`;
   }
-  $('duoDays').addEventListener('click', e => {
-    const b = e.target.closest('[data-day]'); if (!b || b.disabled) return;
-    const r = toggleDuo(b.dataset.day);
-    if (r !== null) flash('flashDuo', `${mdw(parse(b.dataset.day))}を「${r ? 'やった' : 'やっていない'}」にしました。`);
-  });
-  $('duoToday').onclick = () => {
-    const r = toggleDuo(ymd(today()));
-    if (r) { const n = dayStreak('duo'); flash('flashDuo', n > 1 ? `記録しました。${n}日連続です。` : '記録しました。この調子で明日も。'); }
-  };
+  function renderDuoPane(entries) {
+    renderDayPane('duo', entries, 'duoDays', 'duoToday', 'Duolingo');
+    renderDayPane('study', entries, 'studyDays', 'studyToday', '勉強');
+  }
+  function bindDayPane(kind, gridId, btnId, flashId) {
+    $(gridId).addEventListener('click', e => {
+      const b = e.target.closest('[data-day]'); if (!b || b.disabled) return;
+      const r = toggleDay(kind, b.dataset.day);
+      if (r !== null) flash(flashId, `${mdw(parse(b.dataset.day))}を「${r ? 'やった' : 'やっていない'}」にしました。`);
+    });
+    $(btnId).onclick = () => {
+      const r = toggleDay(kind, ymd(today()));
+      if (r) { const n = dayStreak(kind === 'duo' ? 'duo' : 'study'); flash(flashId, n > 1 ? `記録しました。${n}日連続です。` : '記録しました。おつかれさまでした。'); }
+    };
+  }
+  bindDayPane('duo', 'duoDays', 'duoToday', 'flashDuo');
+  bindDayPane('study', 'studyDays', 'studyToday', 'flashStudy');
 
   // ---------- habit support ----------
   const KINDS = { read: ['read', 'finish'], walk: ['steps'], study: ['study'], duo: ['duo'] };
@@ -956,7 +953,7 @@ details.goals .form { margin-top: 12px; }
     const rows = [
       ['read', '読書', v => v ? v + 'ページ' : '読了'],
       ['walk', '歩数', v => fmt(v) + '歩'],
-      ['study', '勉強', v => hm(v)],
+      ['study', '勉強', () => 'やった'],
       ['duo', 'Duolingo', () => '1レッスン以上']
     ].map(([key, name, show]) => {
       const p = plans[key] || {};
@@ -978,10 +975,10 @@ details.goals .form { margin-top: 12px; }
       } else {
         desc = p.when || p.min
           ? `${p.when ? '<b>' + esc(p.when) + '</b>' : ''}${p.when && p.min ? ' → ' : ''}${p.min ? 'まず<b>' + esc(p.min) + '</b>' : ''}`
-          : (key === 'duo' ? '1レッスンだけでも1日に数えます。' : key === 'walk' ? `今日の目安は ${fmt(g.steps / 7)}歩。` : key === 'study' ? `今日の目安は ${Math.ceil(g.studyMin / 7)}分。` : '少しでも読めたら記録しましょう。');
+          : (key === 'duo' ? '1レッスンだけでも1日に数えます。' : key === 'walk' ? `今日の目安は ${fmt(g.steps / 7)}歩。` : key === 'study' ? `週${g.studyDays}日が目標。少しでもやれば1日です。` : '少しでも読めたら記録しましょう。');
       }
       const sl = streak && key !== 'read' ? `<span class="num">${streak}日連続</span>` : '';
-      return `<div class="trow ${key} ${cls}"><div class="chk c-${key}">${now !== null ? CHECK : ''}</div><div style="min-width:0"><div class="tt">${name}${sl}</div><div class="td">${desc}</div></div>${key === 'duo' ? (now !== null ? '' : '<button class="go" data-duo-today="1">やった</button>') : `<button class="go" data-go="${tabKey}">${now !== null ? '追加' : '記録'}</button>`}</div>`;
+      return `<div class="trow ${key} ${cls}"><div class="chk c-${key}">${now !== null ? CHECK : ''}</div><div style="min-width:0"><div class="tt">${name}${sl}</div><div class="td">${desc}</div></div>${key === 'duo' || key === 'study' ? (now !== null ? '' : `<button class="go" data-day-today="${key}">やった</button>`) : `<button class="go" data-go="${tabKey}">${now !== null ? '追加' : '記録'}</button>`}</div>`;
     });
     const lastMon = addDays(mondayOf(t), -7);
     const lw = state.weeks[weekId(lastMon)];
@@ -990,7 +987,7 @@ details.goals .form { margin-top: 12px; }
     $('today').innerHTML = note + rows.join('') + (doneN === rows.length ? '<p class="helper">今日は全部できました。このまま休んで大丈夫です。</p>' : '');
   }
   $('today').addEventListener('click', e => {
-    if (e.target.closest('[data-duo-today]')) { const on = toggleDuo(ymd(today())); if (on) flash('flashDuo', '今日のDuolingoを記録しました。'); return; }
+    const dt = e.target.closest('[data-day-today]'); if (dt) { toggleDay(dt.dataset.dayToday, ymd(today())); return; }
     const b = e.target.closest('[data-go]'); if (!b) return;
     state.view = mondayOf(new Date());
     state.tab = b.dataset.go; render();
@@ -1074,23 +1071,6 @@ details.goals .form { margin-top: 12px; }
     render();
   };
 
-  document.querySelector('#pane-study .quick').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    const add = +b.dataset.add;
-    $('studyMin').value = add ? (+$('studyMin').value || 0) + add : '';
-  });
-  $('saveStudy').onclick = () => {
-    if (!guard()) return;
-    const v = Math.round(+$('studyMin').value);
-    const date = $('studyDate').value;
-    if (!(v > 0)) { flash('flashStudy', '勉強した時間を分で入れてください。'); return; }
-    if (v > 24 * 60) { flash('flashStudy', '1回の記録は24時間までです。'); return; }
-    addEntry(date, { kind: 'study', value: v, note: $('studySubject').value.trim() });
-    $('studyMin').value = '';
-    flash('flashStudy', `${mdw(parse(date))}に ${hm(v)} を記録しました。`);
-    render();
-  };
-
   // reading pane (re-rendered, so delegate)
   $('pane-read').addEventListener('click', e => {
     const t = e.target.closest('button'); if (!t) return;
@@ -1162,48 +1142,16 @@ details.goals .form { margin-top: 12px; }
     if (!guard()) return;
     const books = Math.max(1, Math.round(+$('gBooks').value || 1));
     const steps = Math.max(1000, Math.round(+$('gSteps').value || 30000));
-    const studyMin = Math.max(30, Math.round((+$('gStudy').value || 3) * 60));
+    const studyDays = Math.min(7, Math.max(1, Math.round(+$('gStudy').value || 3)));
     const duoDays = Math.min(7, Math.max(1, Math.round(+$('gDuo').value || 7)));
-    state.settings = { ...state.settings, goals: { books, steps, studyMin, duoDays } };
+    state.settings = { ...state.settings, goals: { books, steps, studyDays, duoDays } };
     persistSettings(); document.activeElement && document.activeElement.blur && document.activeElement.blur(); render();
-    flash('flashGoals', `目標を ${books}冊・${fmt(steps)}歩・${hm(studyMin)}・Duolingo週${duoDays}日 にしました。`);
+    flash('flashGoals', `目標を ${books}冊・${fmt(steps)}歩・勉強週${studyDays}日・Duolingo週${duoDays}日 にしました。`);
   };
-
-  // ---------- study timer (kept in this browser) ----------
-  let timer = null, tick = null;
-  try { timer = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (_) {}
-  function clockText(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); }
-  function renderTimer() {
-    const running = !!(timer && timer.start);
-    $('timerBtn').textContent = running ? '止めて記録' : '開始';
-    $('timerCancel').hidden = !running;
-    $('timerLbl').textContent = running ? '勉強中…（ページを閉じても計測は続きます）' : '勉強タイマー';
-    $('timerClock').textContent = clockText(running ? Date.now() - timer.start : 0);
-    clearInterval(tick);
-    if (running) tick = setInterval(() => { $('timerClock').textContent = clockText(Date.now() - timer.start); }, 1000);
-  }
-  function saveTimer() { try { timer ? localStorage.setItem(TIMER_KEY, JSON.stringify(timer)) : localStorage.removeItem(TIMER_KEY); } catch (_) {} }
-  $('timerBtn').onclick = () => {
-    if (timer && timer.start) {
-      if (!guard()) return;
-      const min = Math.max(1, Math.round((Date.now() - timer.start) / 60000));
-      const date = ymd(new Date(timer.start));
-      addEntry(date, { kind: 'study', value: min, note: $('studySubject').value.trim() });
-      timer = null; saveTimer(); renderTimer();
-      state.view = mondayOf(parse(date));
-      render();
-      flash('flashStudy', `${hm(min)} の勉強を記録しました。おつかれさまでした。`);
-    } else {
-      timer = { start: Date.now() }; saveTimer(); renderTimer();
-    }
-  };
-  $('timerCancel').onclick = () => { timer = null; saveTimer(); renderTimer(); flash('flashStudy', 'タイマーを取り消しました（記録はしていません）。'); };
 
   // ---------- boot ----------
   try { const t = localStorage.getItem(LOCAL_KEY + '-tab'); if (t === 'steps' || t === 'study' || t === 'read' || t === 'duo') state.tab = t; } catch (_) {}
-  if (timer && timer.start) state.tab = 'study';
   render();
-  renderTimer();
 
   loadLocal();
   render();
